@@ -8,7 +8,6 @@ import (
 	"net/netip"
 	"net/url"
 	"path"
-	"regexp"
 	"strings"
 	"time"
 
@@ -16,20 +15,21 @@ import (
 	"github.com/metacubex/mihomo/adapter/outbound"
 	"github.com/metacubex/mihomo/adapter/outboundgroup"
 	"github.com/metacubex/mihomo/adapter/provider"
-	N "github.com/metacubex/mihomo/common/net"
 	"github.com/metacubex/mihomo/common/utils"
 	"github.com/metacubex/mihomo/component/auth"
 	"github.com/metacubex/mihomo/component/cidr"
 	"github.com/metacubex/mihomo/component/fakeip"
 	"github.com/metacubex/mihomo/component/geodata"
+	mihomoHttp "github.com/metacubex/mihomo/component/http"
+	"github.com/metacubex/mihomo/component/keepalive"
 	P "github.com/metacubex/mihomo/component/process"
 	"github.com/metacubex/mihomo/component/resolver"
+	"github.com/metacubex/mihomo/component/resource"
 	"github.com/metacubex/mihomo/component/sniffer"
 	tlsC "github.com/metacubex/mihomo/component/tls"
 	"github.com/metacubex/mihomo/component/trie"
 	"github.com/metacubex/mihomo/component/updater"
 	C "github.com/metacubex/mihomo/constant"
-	"github.com/metacubex/mihomo/constant/features"
 	providerTypes "github.com/metacubex/mihomo/constant/provider"
 	snifferTypes "github.com/metacubex/mihomo/constant/sniffer"
 	"github.com/metacubex/mihomo/dns"
@@ -66,6 +66,7 @@ type General struct {
 	Sniffing                bool              `json:"sniffing"`
 	GlobalClientFingerprint string            `json:"global-client-fingerprint"`
 	GlobalUA                string            `json:"global-ua"`
+	ETagSupport             bool              `json:"etag-support"`
 }
 
 // Inbound config
@@ -102,9 +103,16 @@ type Controller struct {
 	ExternalController     string
 	ExternalControllerTLS  string
 	ExternalControllerUnix string
+	ExternalControllerPipe string
 	ExternalUI             string
 	ExternalDohServer      string
 	Secret                 string
+	Cors                   Cors
+}
+
+type Cors struct {
+	AllowOrigins        []string
+	AllowPrivateNetwork bool
 }
 
 // Experimental config
@@ -187,6 +195,11 @@ type Config struct {
 	Tunnels       []LC.Tunnel
 	Sniffer       *sniffer.Config
 	TLS           *TLS
+}
+
+type RawCors struct {
+	AllowOrigins        []string `yaml:"allow-origins" json:"allow-origins"`
+	AllowPrivateNetwork bool     `yaml:"allow-private-network" json:"allow-private-network"`
 }
 
 type RawDNS struct {
@@ -363,8 +376,10 @@ type RawConfig struct {
 	LogLevel                log.LogLevel      `yaml:"log-level" json:"log-level"`
 	IPv6                    bool              `yaml:"ipv6" json:"ipv6"`
 	ExternalController      string            `yaml:"external-controller" json:"external-controller"`
+	ExternalControllerPipe  string            `yaml:"external-controller-pipe" json:"external-controller-pipe"`
 	ExternalControllerUnix  string            `yaml:"external-controller-unix" json:"external-controller-unix"`
 	ExternalControllerTLS   string            `yaml:"external-controller-tls" json:"external-controller-tls"`
+	ExternalControllerCors  RawCors           `yaml:"external-controller-cors" json:"external-controller-cors"`
 	ExternalUI              string            `yaml:"external-ui" json:"external-ui"`
 	ExternalUIURL           string            `yaml:"external-ui-url" json:"external-ui-url"`
 	ExternalUIName          string            `yaml:"external-ui-name" json:"external-ui-name"`
@@ -382,6 +397,7 @@ type RawConfig struct {
 	FindProcessMode         P.FindProcessMode `yaml:"find-process-mode" json:"find-process-mode"`
 	GlobalClientFingerprint string            `yaml:"global-client-fingerprint" json:"global-client-fingerprint"`
 	GlobalUA                string            `yaml:"global-ua" json:"global-ua"`
+	ETagSupport             bool              `yaml:"etag-support" json:"etag-support"`
 	KeepAliveIdle           int               `yaml:"keep-alive-idle" json:"keep-alive-idle"`
 	KeepAliveInterval       int               `yaml:"keep-alive-interval" json:"keep-alive-interval"`
 	DisableKeepAlive        bool              `yaml:"disable-keep-alive" json:"disable-keep-alive"`
@@ -433,7 +449,7 @@ func DefaultRawConfig() *RawConfig {
 		Mode:              T.Rule,
 		GeoAutoUpdate:     false,
 		GeoUpdateInterval: 24,
-		GeodataMode:       C.GeodataMode,
+		GeodataMode:       geodata.GeodataMode(),
 		GeodataLoader:     "memconservative",
 		UnifiedDelay:      false,
 		Authentication:    []string{},
@@ -445,6 +461,7 @@ func DefaultRawConfig() *RawConfig {
 		TCPConcurrent:     false,
 		FindProcessMode:   P.FindProcessStrict,
 		GlobalUA:          "clash.meta/" + C.Version,
+		ETagSupport:       true,
 		DNS: RawDNS{
 			Enable:         false,
 			IPv6:           false,
@@ -521,7 +538,7 @@ func DefaultRawConfig() *RawConfig {
 		},
 		GeoXUrl: RawGeoXUrl{
 			Mmdb:    "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb",
-			ASN:     "https://github.com/xishang0128/geoip/releases/download/latest/GeoLite2-ASN.mmdb",
+			ASN:     "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb",
 			GeoIp:   "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat",
 			GeoSite: "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat",
 		},
@@ -536,6 +553,10 @@ func DefaultRawConfig() *RawConfig {
 			OverrideDest:    true,
 		},
 		ExternalUIURL: "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip",
+		ExternalControllerCors: RawCors{
+			AllowOrigins:        []string{"*"},
+			AllowPrivateNetwork: true,
+		},
 	}
 }
 
@@ -648,7 +669,7 @@ func ParseRawConfig(rawCfg *RawConfig) (*Config, error) {
 	config.DNS = dnsCfg
 
 	err = parseTun(rawCfg.Tun, config.General)
-	if !features.CMFA && err != nil {
+	if err != nil {
 		return nil, err
 	}
 
@@ -681,31 +702,29 @@ func ParseRawConfig(rawCfg *RawConfig) (*Config, error) {
 }
 
 func parseGeneral(cfg *RawConfig) (*General, error) {
+	updater.SetGeoAutoUpdate(cfg.GeoAutoUpdate)
+	updater.SetGeoUpdateInterval(cfg.GeoUpdateInterval)
 	geodata.SetGeodataMode(cfg.GeodataMode)
-	geodata.SetGeoAutoUpdate(cfg.GeoAutoUpdate)
-	geodata.SetGeoUpdateInterval(cfg.GeoUpdateInterval)
 	geodata.SetLoader(cfg.GeodataLoader)
 	geodata.SetSiteMatcher(cfg.GeositeMatcher)
-	C.GeoAutoUpdate = cfg.GeoAutoUpdate
-	C.GeoUpdateInterval = cfg.GeoUpdateInterval
-	C.GeoIpUrl = cfg.GeoXUrl.GeoIp
-	C.GeoSiteUrl = cfg.GeoXUrl.GeoSite
-	C.MmdbUrl = cfg.GeoXUrl.Mmdb
-	C.ASNUrl = cfg.GeoXUrl.ASN
-	C.GeodataMode = cfg.GeodataMode
-	C.UA = cfg.GlobalUA
+	geodata.SetGeoIpUrl(cfg.GeoXUrl.GeoIp)
+	geodata.SetGeoSiteUrl(cfg.GeoXUrl.GeoSite)
+	geodata.SetMmdbUrl(cfg.GeoXUrl.Mmdb)
+	geodata.SetASNUrl(cfg.GeoXUrl.ASN)
+	mihomoHttp.SetUA(cfg.GlobalUA)
+	resource.SetETag(cfg.ETagSupport)
 
 	if cfg.KeepAliveIdle != 0 {
-		N.KeepAliveIdle = time.Duration(cfg.KeepAliveIdle) * time.Second
+		keepalive.SetKeepAliveIdle(time.Duration(cfg.KeepAliveIdle) * time.Second)
 	}
 	if cfg.KeepAliveInterval != 0 {
-		N.KeepAliveInterval = time.Duration(cfg.KeepAliveInterval) * time.Second
+		keepalive.SetKeepAliveInterval(time.Duration(cfg.KeepAliveInterval) * time.Second)
 	}
-	N.DisableKeepAlive = cfg.DisableKeepAlive
+	keepalive.SetDisableKeepAlive(cfg.DisableKeepAlive)
 
 	// checkout externalUI exist
 	if cfg.ExternalUI != "" {
-		updater.AutoUpdateUI = true
+		updater.AutoDownloadUI = true
 		updater.ExternalUIPath = C.Path.Resolve(cfg.ExternalUI)
 	} else {
 		// default externalUI path
@@ -714,7 +733,7 @@ func parseGeneral(cfg *RawConfig) (*General, error) {
 
 	// checkout UIpath/name exist
 	if cfg.ExternalUIName != "" {
-		updater.AutoUpdateUI = true
+		updater.AutoDownloadUI = true
 		updater.ExternalUIPath = path.Join(updater.ExternalUIPath, cfg.ExternalUIName)
 	}
 
@@ -759,6 +778,7 @@ func parseGeneral(cfg *RawConfig) (*General, error) {
 		FindProcessMode:         cfg.FindProcessMode,
 		GlobalClientFingerprint: cfg.GlobalClientFingerprint,
 		GlobalUA:                cfg.GlobalUA,
+		ETagSupport:             cfg.ETagSupport,
 	}, nil
 }
 
@@ -767,9 +787,14 @@ func parseController(cfg *RawConfig) (*Controller, error) {
 		ExternalController:     cfg.ExternalController,
 		ExternalUI:             cfg.ExternalUI,
 		Secret:                 cfg.Secret,
+		ExternalControllerPipe: cfg.ExternalControllerPipe,
 		ExternalControllerUnix: cfg.ExternalControllerUnix,
 		ExternalControllerTLS:  cfg.ExternalControllerTLS,
 		ExternalDohServer:      cfg.ExternalDohServer,
+		Cors: Cors{
+			AllowOrigins:        cfg.ExternalControllerCors.AllowOrigins,
+			AllowPrivateNetwork: cfg.ExternalControllerCors.AllowPrivateNetwork,
+		},
 	}, nil
 }
 
@@ -1160,16 +1185,6 @@ func parseNameServer(servers []string, respectRules bool, preferH3 bool) ([]dns.
 	var nameservers []dns.NameServer
 
 	for idx, server := range servers {
-		if strings.HasPrefix(server, "dhcp://") {
-			nameservers = append(
-				nameservers,
-				dns.NameServer{
-					Net:  "dhcp",
-					Addr: server[len("dhcp://"):],
-				},
-			)
-			continue
-		}
 		server = parsePureDNSServer(server)
 		u, err := url.Parse(server)
 		if err != nil {
@@ -1220,6 +1235,13 @@ func parseNameServer(servers []string, respectRules bool, preferH3 bool) ([]dns.
 			dnsNetType = "quic" // DNS over QUIC
 		case "system":
 			dnsNetType = "system" // System DNS
+		case "dhcp":
+			addr = server[len("dhcp://"):] // some special notation cannot be parsed by url
+			dnsNetType = "dhcp"            // UDP from DHCP
+			if addr == "system" {          // Compatible with old writing "dhcp://system"
+				dnsNetType = "system"
+				addr = ""
+			}
 		case "rcode":
 			dnsNetType = "rcode"
 			addr = u.Host
@@ -1245,16 +1267,18 @@ func parseNameServer(servers []string, respectRules bool, preferH3 bool) ([]dns.
 			proxyName = dns.RespectRules
 		}
 
-		nameservers = append(
-			nameservers,
-			dns.NameServer{
-				Net:       dnsNetType,
-				Addr:      addr,
-				ProxyName: proxyName,
-				Params:    params,
-				PreferH3:  preferH3,
-			},
-		)
+		nameserver := dns.NameServer{
+			Net:       dnsNetType,
+			Addr:      addr,
+			ProxyName: proxyName,
+			Params:    params,
+			PreferH3:  preferH3,
+		}
+		if slices.ContainsFunc(nameservers, nameserver.Equal) {
+			continue // skip duplicates nameserver
+		}
+
+		nameservers = append(nameservers, nameserver)
 	}
 	return nameservers, nil
 }
@@ -1290,7 +1314,6 @@ func parsePureDNSServer(server string) string {
 
 func parseNameServerPolicy(nsPolicy *orderedmap.OrderedMap[string, any], ruleProviders map[string]providerTypes.RuleProvider, respectRules bool, preferH3 bool) ([]dns.Policy, error) {
 	var policy []dns.Policy
-	re := regexp.MustCompile(`[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}(\.[a-zA-Z]{2,})?`)
 
 	for pair := nsPolicy.Oldest(); pair != nil; pair = pair.Next() {
 		k, v := pair.Key, pair.Value
@@ -1302,8 +1325,9 @@ func parseNameServerPolicy(nsPolicy *orderedmap.OrderedMap[string, any], rulePro
 		if err != nil {
 			return nil, err
 		}
-		if strings.Contains(strings.ToLower(k), ",") {
-			if strings.Contains(k, "geosite:") {
+		kLower := strings.ToLower(k)
+		if strings.Contains(kLower, ",") {
+			if strings.Contains(kLower, "geosite:") {
 				subkeys := strings.Split(k, ":")
 				subkeys = subkeys[1:]
 				subkeys = strings.Split(subkeys[0], ",")
@@ -1311,7 +1335,7 @@ func parseNameServerPolicy(nsPolicy *orderedmap.OrderedMap[string, any], rulePro
 					newKey := "geosite:" + subkey
 					policy = append(policy, dns.Policy{Domain: newKey, NameServers: nameservers})
 				}
-			} else if strings.Contains(strings.ToLower(k), "rule-set:") {
+			} else if strings.Contains(kLower, "rule-set:") {
 				subkeys := strings.Split(k, ":")
 				subkeys = subkeys[1:]
 				subkeys = strings.Split(subkeys[0], ",")
@@ -1319,16 +1343,16 @@ func parseNameServerPolicy(nsPolicy *orderedmap.OrderedMap[string, any], rulePro
 					newKey := "rule-set:" + subkey
 					policy = append(policy, dns.Policy{Domain: newKey, NameServers: nameservers})
 				}
-			} else if re.MatchString(k) {
+			} else {
 				subkeys := strings.Split(k, ",")
 				for _, subkey := range subkeys {
 					policy = append(policy, dns.Policy{Domain: subkey, NameServers: nameservers})
 				}
 			}
 		} else {
-			if strings.Contains(strings.ToLower(k), "geosite:") {
+			if strings.Contains(kLower, "geosite:") {
 				policy = append(policy, dns.Policy{Domain: "geosite:" + k[8:], NameServers: nameservers})
-			} else if strings.Contains(strings.ToLower(k), "rule-set:") {
+			} else if strings.Contains(kLower, "rule-set:") {
 				policy = append(policy, dns.Policy{Domain: "rule-set:" + k[9:], NameServers: nameservers})
 			} else {
 				policy = append(policy, dns.Policy{Domain: k, NameServers: nameservers})

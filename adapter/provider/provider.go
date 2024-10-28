@@ -18,7 +18,6 @@ import (
 	"github.com/metacubex/mihomo/component/resource"
 	C "github.com/metacubex/mihomo/constant"
 	types "github.com/metacubex/mihomo/constant/provider"
-	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/mihomo/tunnel/statistic"
 
 	"github.com/dlclark/regexp2"
@@ -72,19 +71,15 @@ func (pp *proxySetProvider) HealthCheck() {
 }
 
 func (pp *proxySetProvider) Update() error {
-	elm, same, err := pp.Fetcher.Update()
-	if err == nil && !same {
-		pp.OnUpdate(elm)
-	}
+	_, _, err := pp.Fetcher.Update()
 	return err
 }
 
 func (pp *proxySetProvider) Initial() error {
-	elm, err := pp.Fetcher.Initial()
+	_, err := pp.Fetcher.Initial()
 	if err != nil {
 		return err
 	}
-	pp.OnUpdate(elm)
 	pp.getSubscriptionInfo()
 	pp.closeAllConnections()
 	return nil
@@ -96,6 +91,10 @@ func (pp *proxySetProvider) Type() types.ProviderType {
 
 func (pp *proxySetProvider) Proxies() []C.Proxy {
 	return pp.proxies
+}
+
+func (pp *proxySetProvider) Count() int {
+	return len(pp.proxies)
 }
 
 func (pp *proxySetProvider) Touch() {
@@ -125,8 +124,8 @@ func (pp *proxySetProvider) getSubscriptionInfo() {
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*90)
 		defer cancel()
-		resp, err := mihomoHttp.HttpRequestWithProxy(ctx, pp.Vehicle().(*resource.HTTPVehicle).Url(),
-			http.MethodGet, http.Header{"User-Agent": {C.UA}}, nil, pp.Vehicle().Proxy())
+		resp, err := mihomoHttp.HttpRequestWithProxy(ctx, pp.Vehicle().Url(),
+			http.MethodGet, nil, nil, pp.Vehicle().Proxy())
 		if err != nil {
 			return
 		}
@@ -134,7 +133,7 @@ func (pp *proxySetProvider) getSubscriptionInfo() {
 
 		userInfoStr := strings.TrimSpace(resp.Header.Get("subscription-userinfo"))
 		if userInfoStr == "" {
-			resp2, err := mihomoHttp.HttpRequestWithProxy(ctx, pp.Vehicle().(*resource.HTTPVehicle).Url(),
+			resp2, err := mihomoHttp.HttpRequestWithProxy(ctx, pp.Vehicle().Url(),
 				http.MethodGet, http.Header{"User-Agent": {"Quantumultx"}}, nil, pp.Vehicle().Proxy())
 			if err != nil {
 				return
@@ -145,10 +144,7 @@ func (pp *proxySetProvider) getSubscriptionInfo() {
 				return
 			}
 		}
-		pp.subscriptionInfo, err = NewSubscriptionInfo(userInfoStr)
-		if err != nil {
-			log.Warnln("[Provider] get subscription-userinfo: %e", err)
-		}
+		pp.subscriptionInfo = NewSubscriptionInfo(userInfoStr)
 	}()
 }
 
@@ -265,6 +261,10 @@ func (cp *compatibleProvider) Type() types.ProviderType {
 
 func (cp *compatibleProvider) Proxies() []C.Proxy {
 	return cp.proxies
+}
+
+func (cp *compatibleProvider) Count() int {
+	return len(cp.proxies)
 }
 
 func (cp *compatibleProvider) Touch() {
@@ -399,6 +399,16 @@ func proxiesParseAndFilter(filter string, excludeFilter string, excludeTypeArray
 					case "additional-suffix":
 						name := mapping["name"].(string)
 						mapping["name"] = name + *field.Interface().(*string)
+					case "proxy-name":
+						// Iterate through all naming replacement rules and perform the replacements.
+						for _, expr := range override.ProxyName {
+							name := mapping["name"].(string)
+							newName, err := expr.Pattern.Replace(name, expr.Target, 0, -1)
+							if err != nil {
+								return nil, fmt.Errorf("proxy name replace error: %w", err)
+							}
+							mapping["name"] = newName
+						}
 					default:
 						mapping[fieldName] = field.Elem().Interface()
 					}

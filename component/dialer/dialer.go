@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/metacubex/mihomo/component/keepalive"
 	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/log"
 )
@@ -84,7 +85,7 @@ func ListenPacket(ctx context.Context, network, address string, rAddrPort netip.
 	if cfg.addrReuse {
 		addrReuseToListenConfig(lc)
 	}
-	if DefaultSocketHook != nil { // ignore interfaceName, routingMark when DefaultSocketHook not null (in CFMA)
+	if DefaultSocketHook != nil { // ignore interfaceName, routingMark when DefaultSocketHook not null (in CMFA)
 		socketHookToListenConfig(lc)
 	} else {
 		if cfg.interfaceName != "" {
@@ -144,11 +145,12 @@ func dialContext(ctx context.Context, network string, destination netip.Addr, po
 	}
 
 	dialer := netDialer.(*net.Dialer)
+	keepalive.SetNetDialer(dialer)
 	if opt.mpTcp {
 		setMultiPathTCP(dialer)
 	}
 
-	if DefaultSocketHook != nil { // ignore interfaceName, routingMark and tfo when DefaultSocketHook not null (in CFMA)
+	if DefaultSocketHook != nil { // ignore interfaceName, routingMark and tfo when DefaultSocketHook not null (in CMFA)
 		socketHookToToDialer(dialer)
 	} else {
 		if opt.interfaceName != "" {

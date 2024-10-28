@@ -17,10 +17,12 @@ import (
 	"github.com/metacubex/mihomo/component/ca"
 	"github.com/metacubex/mihomo/component/dialer"
 	G "github.com/metacubex/mihomo/component/geodata"
+	mihomoHttp "github.com/metacubex/mihomo/component/http"
 	"github.com/metacubex/mihomo/component/iface"
 	"github.com/metacubex/mihomo/component/profile"
 	"github.com/metacubex/mihomo/component/profile/cachefile"
 	"github.com/metacubex/mihomo/component/resolver"
+	"github.com/metacubex/mihomo/component/resource"
 	"github.com/metacubex/mihomo/component/sniffer"
 	tlsC "github.com/metacubex/mihomo/component/tls"
 	"github.com/metacubex/mihomo/component/trie"
@@ -81,6 +83,7 @@ func ParseWithBytes(buf []byte) (*config.Config, error) {
 func ApplyConfig(cfg *config.Config, force bool) {
 	mux.Lock()
 	defer mux.Unlock()
+	log.SetLevel(cfg.General.LogLevel)
 
 	tunnel.OnSuspend()
 
@@ -116,7 +119,7 @@ func ApplyConfig(cfg *config.Config, force bool) {
 	hcCompatibleProvider(cfg.Providers)
 	initExternalUI()
 
-	log.SetLevel(cfg.General.LogLevel)
+	resolver.ResetConnection()
 }
 
 func initInnerTcp() {
@@ -126,7 +129,7 @@ func initInnerTcp() {
 func GetGeneral() *config.General {
 	ports := listener.GetPorts()
 	var authenticator []string
-	if auth := authStore.Authenticator(); auth != nil {
+	if auth := authStore.Default.Authenticator(); auth != nil {
 		authenticator = auth.Users()
 	}
 
@@ -157,13 +160,13 @@ func GetGeneral() *config.General {
 		Interface:    dialer.DefaultInterface.Load(),
 		RoutingMark:  int(dialer.DefaultRoutingMark.Load()),
 		GeoXUrl: config.GeoXUrl{
-			GeoIp:   C.GeoIpUrl,
-			Mmdb:    C.MmdbUrl,
-			ASN:     C.ASNUrl,
-			GeoSite: C.GeoSiteUrl,
+			GeoIp:   G.GeoIpUrl(),
+			Mmdb:    G.MmdbUrl(),
+			ASN:     G.ASNUrl(),
+			GeoSite: G.GeoSiteUrl(),
 		},
-		GeoAutoUpdate:           G.GeoAutoUpdate(),
-		GeoUpdateInterval:       G.GeoUpdateInterval(),
+		GeoAutoUpdate:           updater.GeoAutoUpdate(),
+		GeoUpdateInterval:       updater.GeoUpdateInterval(),
 		GeodataMode:             G.GeodataMode(),
 		GeodataLoader:           G.LoaderName(),
 		GeositeMatcher:          G.SiteMatcherName(),
@@ -171,7 +174,8 @@ func GetGeneral() *config.General {
 		FindProcessMode:         tunnel.FindProcessMode(),
 		Sniffing:                tunnel.IsSniffing(),
 		GlobalClientFingerprint: tlsC.GetGlobalFingerprint(),
-		GlobalUA:                C.UA,
+		GlobalUA:                mihomoHttp.UA(),
+		ETagSupport:             resource.ETag(),
 	}
 
 	return general
@@ -251,8 +255,7 @@ func updateDNS(c *config.DNS, generalIPv6 bool) {
 		CacheAlgorithm:       c.CacheAlgorithm,
 	}
 
-	r := dns.NewResolver(cfg)
-	pr := dns.NewProxyServerHostResolver(r)
+	r, pr := dns.NewResolver(cfg)
 	m := dns.NewEnhancer(cfg)
 
 	// reuse cache of old host mapper
@@ -381,13 +384,13 @@ func updateTunnels(tunnels []LC.Tunnel) {
 }
 
 func initExternalUI() {
-	if updater.AutoUpdateUI {
+	if updater.AutoDownloadUI {
 		dirEntries, _ := os.ReadDir(updater.ExternalUIPath)
 		if len(dirEntries) > 0 {
 			log.Infoln("UI already exists, skip downloading")
 		} else {
 			log.Infoln("External UI downloading ...")
-			updater.UpdateUI()
+			updater.DownloadUI()
 		}
 	}
 }
@@ -420,7 +423,7 @@ func updateGeneral(general *config.General) {
 
 func updateUsers(users []auth.AuthUser) {
 	authenticator := auth.NewAuthenticator(users)
-	authStore.SetAuthenticator(authenticator)
+	authStore.Default.SetAuthenticator(authenticator)
 	if authenticator != nil {
 		log.Infoln("Authentication of local server updated")
 	}
@@ -442,12 +445,12 @@ func patchSelectGroup(proxies map[string]C.Proxy) {
 	}
 
 	for name, proxy := range proxies {
-		outbound, ok := proxy.(*adapter.Proxy)
+		outbound, ok := proxy.(C.Proxy)
 		if !ok {
 			continue
 		}
 
-		selector, ok := outbound.ProxyAdapter.(outboundgroup.SelectAble)
+		selector, ok := outbound.Adapter().(outboundgroup.SelectAble)
 		if !ok {
 			continue
 		}
