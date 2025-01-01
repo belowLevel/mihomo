@@ -27,7 +27,6 @@ import (
 	E "github.com/sagernet/sing/common/exceptions"
 	F "github.com/sagernet/sing/common/format"
 	"github.com/sagernet/sing/common/ranges"
-
 	"go4.org/netipx"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"

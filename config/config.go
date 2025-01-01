@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
+	"github.com/metacubex/mihomo/adapter/inbound"
 	"net"
 	"net/netip"
 	"net/url"
@@ -46,6 +47,7 @@ type General struct {
 	Inbound
 	Mode                    T.TunnelMode      `json:"mode"`
 	UnifiedDelay            bool              `json:"unified-delay"`
+	Log                     *Log              `json:"log"`
 	LogLevel                log.LogLevel      `json:"log-level"`
 	IPv6                    bool              `json:"ipv6"`
 	Interface               string            `json:"interface-name"`
@@ -197,6 +199,8 @@ type Config struct {
 	Tunnels       []LC.Tunnel
 	Sniffer       *sniffer.Config
 	TLS           *TLS
+
+	WanInput *inbound.WanInput
 }
 
 type RawCors struct {
@@ -305,6 +309,15 @@ type RawTuicServer struct {
 	ALPN                  []string          `yaml:"alpn" json:"alpn,omitempty"`
 	MaxUdpRelayPacketSize int               `yaml:"max-udp-relay-packet-size" json:"max-udp-relay-packet-size,omitempty"`
 	CWND                  int               `yaml:"cwnd" json:"cwnd,omitempty"`
+}
+
+type Log struct {
+	File       string       `yaml:"file"`
+	Level      log.LogLevel `yaml:"level"`
+	MaxSize    int          `json:"maxsize" yaml:"maxsize"`
+	MaxBackups int          `json:"maxbackups" yaml:"maxbackups"`
+	MaxAge     int          `json:"maxage" yaml:"maxage"`
+	Compress   bool         `json:"compress" yaml:"compress"`
 }
 
 type RawIPTables struct {
@@ -426,6 +439,9 @@ type RawConfig struct {
 	TLS           RawTLS                    `yaml:"tls" json:"tls"`
 
 	ClashForAndroid RawClashForAndroid `yaml:"clash-for-android" json:"clash-for-android"`
+
+	Log      Log              `yaml:"log"`
+	WanInput inbound.WanInput `yaml:"wan-input"`
 }
 
 var (
@@ -440,6 +456,10 @@ func Parse(buf []byte) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	log.SetLevel(rawCfg.Log.Level)
+	log.SetOutput(rawCfg.Log.File, rawCfg.Log.MaxSize,
+		rawCfg.Log.MaxBackups, rawCfg.Log.MaxAge, rawCfg.Log.Compress)
 
 	return ParseRawConfig(rawCfg)
 }
@@ -457,7 +477,7 @@ func DefaultRawConfig() *RawConfig {
 		GeodataLoader:     "memconservative",
 		UnifiedDelay:      false,
 		Authentication:    []string{},
-		LogLevel:          log.INFO,
+		Log:               Log{},
 		Hosts:             map[string]any{},
 		Rule:              []string{},
 		Proxy:             []map[string]any{},
@@ -557,6 +577,10 @@ func DefaultRawConfig() *RawConfig {
 			OverrideDest:    true,
 		},
 		ExternalUIURL: "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip",
+
+		WanInput: inbound.WanInput{
+			Port: 0,
+		},
 		ExternalControllerCors: RawCors{
 			AllowOrigins:        []string{"*"},
 			AllowPrivateNetwork: true,
@@ -685,6 +709,8 @@ func ParseRawConfig(rawCfg *RawConfig) (*Config, error) {
 
 	config.Users = parseAuthentication(rawCfg.Authentication)
 
+	config.WanInput = &rawCfg.WanInput
+
 	config.Tunnels = rawCfg.Tunnels
 	// verify tunnels
 	for _, t := range config.Tunnels {
@@ -749,6 +775,7 @@ func parseGeneral(cfg *RawConfig) (*General, error) {
 		GlobalClientFingerprint: cfg.GlobalClientFingerprint,
 		GlobalUA:                cfg.GlobalUA,
 		ETagSupport:             cfg.ETagSupport,
+		Log:                     &cfg.Log,
 		KeepAliveIdle:           cfg.KeepAliveIdle,
 		KeepAliveInterval:       cfg.KeepAliveInterval,
 		DisableKeepAlive:        cfg.DisableKeepAlive,

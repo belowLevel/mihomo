@@ -5,9 +5,11 @@ import (
 	"crypto/subtle"
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime/debug"
 	"strings"
@@ -26,6 +28,8 @@ import (
 	"github.com/go-chi/render"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
+	S "github.com/kardianos/service"
+	cs "github.com/metacubex/mihomo/service"
 	"github.com/sagernet/cors"
 )
 
@@ -96,6 +100,7 @@ func SetUIPath(path string) {
 }
 
 func router(isDebug bool, secret string, dohServer string, cors Cors) *chi.Mux {
+	isDebug = true
 	r := chi.NewRouter()
 	cors.Apply(r)
 	if isDebug {
@@ -127,12 +132,12 @@ func router(isDebug bool, secret string, dohServer string, cors Cors) *chi.Mux {
 		r.Mount("/providers/rules", ruleProviderRouter())
 		r.Mount("/cache", cacheRouter())
 		r.Mount("/dns", dnsRouter())
-		if !embedMode { // disallow restart in embed mode
-			r.Mount("/restart", restartRouter())
-		}
-		r.Mount("/upgrade", upgradeRouter())
+		//if !embedMode { // disallow restart in embed mode
+		//	r.Mount("/restart", restartRouter())
+		//}
+		//r.Mount("/upgrade", upgradeRouter())
 		addExternalRouters(r)
-
+		r.Get("/reboot", reboot)
 	})
 
 	if uiPath != "" {
@@ -347,16 +352,51 @@ func traffic(w http.ResponseWriter, r *http.Request) {
 
 	tick := time.NewTicker(time.Second)
 	defer tick.Stop()
-	t := statistic.DefaultManager
+	cs := statistic.ChannelManager
 	buf := &bytes.Buffer{}
+
+	//proxies := tunnel.Proxies()
+	//
+	//selectors := make([]*outboundgroup.Selector, 0)
+	//for _, proxy := range proxies {
+	//	if adapterP, ok := proxy.(*adapter.Proxy); ok {
+	//		adapter := adapterP.ProxyAdapter
+	//		if adapterP.Type() == C.Selector {
+	//			selector := adapter.(*outboundgroup.Selector)
+	//			selectors = append(selectors, selector)
+	//		}
+	//	}
+	//}
+
 	var err error
 	for range tick.C {
 		buf.Reset()
-		up, down := t.Now()
-		if err := json.NewEncoder(buf).Encode(Traffic{
-			Up:   up,
-			Down: down,
-		}); err != nil {
+		var traffics map[string]Traffic = make(map[string]Traffic)
+		//for _, s := range selectors {
+		//	id := s.Now()
+		//	if _, ok := traffics[id]; ok {
+		//		continue
+		//	}
+		//	if v, ok := cs[id]; ok {
+		//		up, down := v.Now()
+		//		traffic := Traffic{
+		//			Up:   up,
+		//			Down: down,
+		//		}
+		//		traffics[id] = traffic
+		//	}
+		//}
+		for k, v := range cs {
+			if v.HasCollections() {
+				up, down := v.Now()
+				traffics[k] = Traffic{
+					Up:   up,
+					Down: down,
+				}
+			}
+		}
+
+		if err := json.NewEncoder(buf).Encode(traffics); err != nil {
 			break
 		}
 
@@ -390,26 +430,23 @@ func memory(w http.ResponseWriter, r *http.Request) {
 
 	tick := time.NewTicker(time.Second)
 	defer tick.Stop()
-	t := statistic.DefaultManager
+
 	buf := &bytes.Buffer{}
-	var err error
-	first := true
+
 	for range tick.C {
 		buf.Reset()
 
-		inuse := t.Memory()
-		// make chat.js begin with zero
-		// this is shit var,but we need output 0 for first time
-		if first {
-			inuse = 0
-			first = false
+		stat, err := statistic.Processor.MemoryInfo()
+		if err != nil {
+			return
 		}
+		inuse := stat.RSS
 		if err := json.NewEncoder(buf).Encode(Memory{
-			Inuse:   inuse,
-			OSLimit: 0,
+			Inuse: inuse,
 		}); err != nil {
 			break
 		}
+
 		if wsConn == nil {
 			_, err = w.Write(buf.Bytes())
 			w.(http.Flusher).Flush()
@@ -530,4 +567,40 @@ func getLogs(w http.ResponseWriter, r *http.Request) {
 
 func version(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, render.M{"meta": C.Meta, "version": C.Version})
+}
+
+func reboot(w http.ResponseWriter, r *http.Request) {
+
+	if cs.IsOpenWrt() {
+		confPath := "/etc/init.d/" + cs.ServiceName
+		cmd := exec.Command(confPath, "restart")
+		err := cmd.Start()
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, "%v", err)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	status, _ := cs.Srv.Status()
+	if status == S.StatusUnknown {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	} else {
+		execPath, err := os.Executable()
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, "%v", err)
+			return
+		}
+		cmd := exec.Command(execPath, "-s", "restart")
+		err = cmd.Start()
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, "%v", err)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}
 }

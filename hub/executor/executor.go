@@ -104,9 +104,11 @@ func ApplyConfig(cfg *config.Config, force bool) {
 	updateHosts(cfg.Hosts)
 	updateGeneral(cfg.General, true)
 	updateNTP(cfg.NTP)
+
 	updateDNS(cfg.DNS, cfg.General.IPv6)
-	updateListeners(cfg.General, cfg.Listeners, force)
+	updateListeners(cfg.General, cfg.Listeners, force, cfg.WanInput)
 	updateTun(cfg.General) // tun should not care "force"
+
 	updateIPTables(cfg)
 	updateTunnels(cfg.Tunnels)
 
@@ -120,8 +122,9 @@ func ApplyConfig(cfg *config.Config, force bool) {
 	tunnel.OnRunning()
 	hcCompatibleProvider(cfg.Providers)
 	updateUpdater(cfg)
-
 	resolver.ResetConnection()
+
+	log.SetLevel(cfg.General.Log.Level)
 }
 
 func initInnerTcp() {
@@ -186,7 +189,8 @@ func GetGeneral() *config.General {
 	return general
 }
 
-func updateListeners(general *config.General, listeners map[string]C.InboundListener, force bool) {
+func updateListeners(general *config.General, listeners map[string]C.InboundListener, force bool,
+	wanInput *inbound.WanInput) {
 	listener.PatchInboundListeners(listeners, tunnel.Tunnel, true)
 	if !force {
 		return
@@ -208,6 +212,10 @@ func updateListeners(general *config.General, listeners map[string]C.InboundList
 	listener.ReCreateShadowSocks(general.ShadowSocksConfig, tunnel.Tunnel)
 	listener.ReCreateVmess(general.VmessConfig, tunnel.Tunnel)
 	listener.ReCreateTuic(general.TuicServer, tunnel.Tunnel)
+
+	if wanInput.Port != 0 {
+		listener.ReCreateMixedTls(wanInput, tunnel.Tunnel)
+	}
 }
 
 func updateTun(general *config.General) {

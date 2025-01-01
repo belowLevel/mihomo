@@ -2,18 +2,8 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
 	"flag"
 	"fmt"
-	"io"
-	"net"
-	"os"
-	"os/signal"
-	"path/filepath"
-	"runtime"
-	"strings"
-	"syscall"
-
 	"github.com/metacubex/mihomo/component/geodata"
 	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/config"
@@ -23,16 +13,23 @@ import (
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/mihomo/rules/provider"
-
+	cs "github.com/metacubex/mihomo/service"
 	"go.uber.org/automaxprocs/maxprocs"
+	"net"
+	"os"
+	"os/signal"
+	"runtime"
+	"strings"
+	"syscall"
+	"unsafe"
 )
 
 var (
-	version                bool
-	testConfig             bool
-	geodataMode            bool
-	homeDir                string
-	configFile             string
+	version     bool
+	testConfig  bool
+	geodataMode bool
+	//homeDir                string
+	//configFile             string
 	configString           string
 	configBytes            []byte
 	externalUI             string
@@ -40,12 +37,15 @@ var (
 	externalControllerUnix string
 	externalControllerPipe string
 	secret                 string
+
+	service string
+	flagset map[string]bool
 )
 
 func init() {
-	flag.StringVar(&homeDir, "d", os.Getenv("CLASH_HOME_DIR"), "set configuration directory")
-	flag.StringVar(&configFile, "f", os.Getenv("CLASH_CONFIG_FILE"), "specify configuration file")
-	flag.StringVar(&configString, "config", os.Getenv("CLASH_CONFIG_STRING"), "specify base64-encoded configuration string")
+	//flag.StringVar(&homeDir, "d", os.Getenv("CLASH_HOME_DIR"), "set configuration directory")
+	//flag.StringVar(&configFile, "f", os.Getenv("CLASH_CONFIG_FILE"), "specify configuration file")
+	//flag.StringVar(&configString, "config", os.Getenv("CLASH_CONFIG_STRING"), "specify base64-encoded configuration string")
 	flag.StringVar(&externalUI, "ext-ui", os.Getenv("CLASH_OVERRIDE_EXTERNAL_UI_DIR"), "override external ui directory")
 	flag.StringVar(&externalController, "ext-ctl", os.Getenv("CLASH_OVERRIDE_EXTERNAL_CONTROLLER"), "override external controller address")
 	flag.StringVar(&externalControllerUnix, "ext-ctl-unix", os.Getenv("CLASH_OVERRIDE_EXTERNAL_CONTROLLER_UNIX"), "override external controller unix address")
@@ -54,10 +54,18 @@ func init() {
 	flag.BoolVar(&geodataMode, "m", false, "set geodata mode")
 	flag.BoolVar(&version, "v", false, "show current version of mihomo")
 	flag.BoolVar(&testConfig, "t", false, "test configuration and exit")
+	flag.StringVar(&service, "s", "", "Service control action: status, install (as a service), uninstall (as a service), start(in daemon), stop(daemon), restart(stop then start)")
 	flag.Parse()
+
+	flagset = map[string]bool{}
+	flag.Visit(func(f *flag.Flag) {
+		flagset[f.Name] = true
+	})
 }
 
 func main() {
+	a := 1
+	log.Infoln("ptr size %d", unsafe.Sizeof(&a))
 	// Defensive programming: panic when code mistakenly calls net.DefaultResolver
 	net.DefaultResolver.PreferGo = true
 	net.DefaultResolver.Dial = func(ctx context.Context, network, address string) (net.Conn, error) {
@@ -81,46 +89,8 @@ func main() {
 		return
 	}
 
-	if homeDir != "" {
-		if !filepath.IsAbs(homeDir) {
-			currentDir, _ := os.Getwd()
-			homeDir = filepath.Join(currentDir, homeDir)
-		}
-		C.SetHomeDir(homeDir)
-	}
-
 	if geodataMode {
 		geodata.SetGeodataMode(true)
-	}
-
-	if configString != "" {
-		var err error
-		configBytes, err = base64.StdEncoding.DecodeString(configString)
-		if err != nil {
-			log.Fatalln("Initial configuration error: %s", err.Error())
-			return
-		}
-	} else if configFile == "-" {
-		var err error
-		configBytes, err = io.ReadAll(os.Stdin)
-		if err != nil {
-			log.Fatalln("Initial configuration error: %s", err.Error())
-			return
-		}
-	} else {
-		if configFile != "" {
-			if !filepath.IsAbs(configFile) {
-				currentDir, _ := os.Getwd()
-				configFile = filepath.Join(currentDir, configFile)
-			}
-		} else {
-			configFile = filepath.Join(C.Path.HomeDir(), C.Path.Config())
-		}
-		C.SetConfig(configFile)
-
-		if err := config.Init(C.Path.HomeDir()); err != nil {
-			log.Fatalln("Initial configuration directory error: %s", err.Error())
-		}
 	}
 
 	if testConfig {
@@ -141,6 +111,15 @@ func main() {
 		return
 	}
 
+	prg := cs.NewService(run)
+	if flagset["s"] {
+		prg.Action(service)
+		return
+	}
+	prg.RunIt()
+}
+
+func run() {
 	var options []hub.Option
 	if externalUI != "" {
 		options = append(options, hub.WithExternalUI(externalUI))
@@ -166,8 +145,9 @@ func main() {
 		updater.RegisterGeoUpdater()
 	}
 
-	defer executor.Shutdown()
+	config.Init(C.Path.HomeDir())
 
+	defer executor.Shutdown()
 	termSign := make(chan os.Signal, 1)
 	hupSign := make(chan os.Signal, 1)
 	signal.Notify(termSign, syscall.SIGINT, syscall.SIGTERM)

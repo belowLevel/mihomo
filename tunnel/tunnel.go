@@ -409,18 +409,18 @@ func handleUDPConn(packet C.PacketAdapter) {
 			}
 			logMetadata(metadata, rule, rawPc)
 
-			pc := statistic.NewUDPTracker(rawPc, statistic.DefaultManager, metadata, rule, 0, 0, true)
+			//pc := statistic.NewUDPTracker(rawPc, statistic.DefaultManager, metadata, rule, 0, 0, true)
 
 			if rawPc.Chains().Last() == "REJECT-DROP" {
-				_ = pc.Close()
+				_ = rawPc.Close()
 				return nil, nil, errors.New("rejected drop packet")
 			}
 
 			oAddrPort := metadata.AddrPort()
 			writeBackProxy := nat.NewWriteBackProxy(packet)
 
-			go handleUDPToLocal(writeBackProxy, pc, sender, key, oAddrPort, fAddr)
-			return pc, writeBackProxy, nil
+			go handleUDPToLocal(writeBackProxy, rawPc, sender, key, oAddrPort, fAddr)
+			return rawPc, writeBackProxy, nil
 		}
 
 		go func() {
@@ -547,7 +547,11 @@ func handleTCPConn(connCtx C.ConnContext) {
 	}
 	logMetadata(metadata, rule, remoteConn)
 
-	remoteConn = statistic.NewTCPTracker(remoteConn, statistic.DefaultManager, metadata, rule, 0, int64(peekLen), true)
+	manager := getManagerFromTCP(remoteConn)
+
+	remoteConn = statistic.NewTCPTracker(remoteConn, manager, metadata, rule,
+		0, int64(peekLen), true)
+
 	defer func(remoteConn C.Conn) {
 		_ = remoteConn.Close()
 	}(remoteConn)
@@ -559,24 +563,63 @@ func handleTCPConn(connCtx C.ConnContext) {
 	handleSocket(conn, remoteConn)
 }
 
+func getManagerFromTCP(remoteConn C.Conn) *statistic.Manager {
+	channel := remoteConn.Chains()[0]
+	manager, ok := statistic.ChannelManager[channel]
+	if !ok {
+		statistic.ChannelMutex.Lock()
+		manager, ok = statistic.ChannelManager[channel]
+		if !ok {
+			manager = statistic.NewManager(channel)
+		}
+		statistic.ChannelMutex.Unlock()
+	}
+	return manager
+}
+
+func getManagerFromUDP(remoteConn C.PacketConn) *statistic.Manager {
+	channel := remoteConn.Chains()[0]
+	manager, ok := statistic.ChannelManager[channel]
+	if !ok {
+		statistic.ChannelMutex.Lock()
+		manager, ok = statistic.ChannelManager[channel]
+		if !ok {
+			manager = statistic.NewManager(channel)
+		}
+		statistic.ChannelMutex.Unlock()
+	}
+	return manager
+}
 func logMetadataErr(metadata *C.Metadata, rule C.Rule, proxy C.ProxyAdapter, err error) {
 	if rule == nil {
 		log.Warnln("[%s] dial %s %s --> %s error: %s", strings.ToUpper(metadata.NetWork.String()), proxy.Name(), metadata.SourceDetail(), metadata.RemoteAddress(), err.Error())
 	} else {
-		log.Warnln("[%s] dial %s (match %s/%s) %s --> %s error: %s", strings.ToUpper(metadata.NetWork.String()), proxy.Name(), rule.RuleType().String(), rule.Payload(), metadata.SourceDetail(), metadata.RemoteAddress(), err.Error())
+		rulePayload := statistic.GetRuleName(metadata, rule)
+		log.Warnln("[%s] dial %s (match %s/%s) %s --> %s error: %s", strings.ToUpper(metadata.NetWork.String()),
+			proxy.Name(), rule.RuleType().String(), rulePayload, metadata.SourceDetail(), metadata.RemoteAddress(), err.Error())
 	}
 }
 
 func logMetadata(metadata *C.Metadata, rule C.Rule, remoteConn C.Connection) {
 	switch {
 	case metadata.SpecialProxy != "":
-		log.Infoln("[%s] %s --> %s using %s", strings.ToUpper(metadata.NetWork.String()), metadata.SourceDetail(), metadata.RemoteAddress(), metadata.SpecialProxy)
+		log.Debugln("[%s] %s --> %s using %s", strings.ToUpper(metadata.NetWork.String()), metadata.SourceDetail(), metadata.RemoteAddress(), metadata.SpecialProxy)
 	case rule != nil:
-		if rule.Payload() != "" {
-			log.Infoln("[%s] %s --> %s match %s using %s", strings.ToUpper(metadata.NetWork.String()), metadata.SourceDetail(), metadata.RemoteAddress(), fmt.Sprintf("%s(%s)", rule.RuleType().String(), rule.Payload()), remoteConn.Chains().String())
-		} else {
-			log.Infoln("[%s] %s --> %s match %s using %s", strings.ToUpper(metadata.NetWork.String()), metadata.SourceDetail(), metadata.RemoteAddress(), rule.RuleType().String(), remoteConn.Chains().String())
-		}
+		//if rule.Payload() != "" {
+		//	log.Infoln("[%s] %s --> %s match %s using %s", strings.ToUpper(metadata.NetWork.String()), metadata.SourceDetail(), metadata.RemoteAddress(), fmt.Sprintf("%s(%s)", rule.RuleType().String(), rule.Payload()), remoteConn.Chains().String())
+		//} else {
+		//	log.Infoln("[%s] %s --> %s match %s using %s", strings.ToUpper(metadata.NetWork.String()), metadata.SourceDetail(), metadata.RemoteAddress(), rule.RuleType().String(), remoteConn.Chains().String())
+		//}
+		rulePayload := statistic.GetRuleName(metadata, rule)
+		log.Infoln(
+			"%6s(%7s) | %12s | %s -> %s  %s",
+			rule.RuleType().String(),
+			rulePayload,
+			remoteConn.Chains().String(),
+			metadata.SourceDetail(),
+			metadata.Type,
+			metadata.RemoteAddress(),
+		)
 	case mode == Global:
 		log.Infoln("[%s] %s --> %s using GLOBAL", strings.ToUpper(metadata.NetWork.String()), metadata.SourceDetail(), metadata.RemoteAddress())
 	case mode == Direct:

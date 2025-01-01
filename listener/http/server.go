@@ -1,7 +1,9 @@
 package http
 
 import (
+	"github.com/mastercactapus/proxyprotocol"
 	"net"
+	"time"
 
 	"github.com/metacubex/mihomo/adapter/inbound"
 	"github.com/metacubex/mihomo/component/auth"
@@ -59,6 +61,7 @@ func NewWithAuthenticator(addr string, tunnel C.Tunnel, store auth.AuthStore, ad
 	if err != nil {
 		return nil, err
 	}
+	l = proxyprotocol.NewListener(l, time.Second*5)
 
 	hl := &Listener{
 		listener: l,
