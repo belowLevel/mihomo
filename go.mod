@@ -2,14 +2,12 @@ module github.com/metacubex/mihomo
 
 go 1.20
 
-replace github.com/metacubex/sing-quic => github.com/belowLevel/sing-quic v0.0.0-20250101155105-cfbb1e567290
-
 require (
 	github.com/3andne/restls-client-go v0.1.6
 	github.com/bahlo/generic-list-go v0.2.0
 	github.com/coreos/go-iptables v0.8.0
 	github.com/dlclark/regexp2 v1.11.4
-	github.com/enfein/mieru/v3 v3.9.0
+	github.com/enfein/mieru/v3 v3.10.0
 	github.com/go-chi/chi/v5 v5.2.0
 	github.com/go-chi/render v1.0.3
 	github.com/gobwas/ws v1.4.0
