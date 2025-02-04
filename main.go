@@ -4,6 +4,14 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net"
+	"os"
+	"os/signal"
+	"runtime"
+	"strings"
+	"syscall"
+
+	"github.com/metacubex/mihomo/component/generater"
 	"github.com/metacubex/mihomo/component/geodata"
 	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/config"
@@ -14,13 +22,6 @@ import (
 	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/mihomo/rules/provider"
 	cs "github.com/metacubex/mihomo/service"
-	"go.uber.org/automaxprocs/maxprocs"
-	"net"
-	"os"
-	"os/signal"
-	"runtime"
-	"strings"
-	"syscall"
 	"unsafe"
 )
 
@@ -72,10 +73,13 @@ func main() {
 		panic("should never be called")
 	}
 
-	_, _ = maxprocs.Set(maxprocs.Logger(func(string, ...any) {}))
-
 	if len(os.Args) > 1 && os.Args[1] == "convert-ruleset" {
 		provider.ConvertMain(os.Args[2:])
+		return
+	}
+
+	if len(os.Args) > 1 && os.Args[1] == "generate" {
+		generater.Main(os.Args[2:])
 		return
 	}
 

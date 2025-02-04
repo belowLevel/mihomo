@@ -25,6 +25,7 @@ const (
 	SOCKS5
 	SHADOWSOCKS
 	VMESS
+	VLESS
 	REDIR
 	TPROXY
 	TUNNEL
@@ -70,6 +71,8 @@ func (t Type) String() string {
 		return "ShadowSocks"
 	case VMESS:
 		return "Vmess"
+	case VLESS:
+		return "Vless"
 	case REDIR:
 		return "Redir"
 	case TPROXY:
@@ -106,6 +109,8 @@ func ParseType(t string) (*Type, error) {
 		res = SHADOWSOCKS
 	case "VMESS":
 		res = VMESS
+	case "VLESS":
+		res = VLESS
 	case "REDIR":
 		res = REDIR
 	case "TPROXY":
