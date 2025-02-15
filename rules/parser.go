@@ -89,8 +89,10 @@ func ParseRule(tp, payload, target string, params []string, subRules map[string]
 		parsed = RC.NewMustResolve(target)
 	case "ISOEMPTY":
 		parsed = RC.NewISOEmpty(target)
+	case "":
+		parseErr = fmt.Errorf("missing subsequent parameters: %s", payload)
 	default:
-		parseErr = fmt.Errorf("unsupported rule type %s", tp)
+		parseErr = fmt.Errorf("unsupported rule type: %s", tp)
 	}
 
 	if parseErr != nil {
