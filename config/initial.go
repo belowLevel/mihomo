@@ -37,6 +37,13 @@ func Init(dir string) error {
 		}
 	}
 
+	// init log path
+	if _, err := os.Stat(C.Path.LogPath()); os.IsNotExist(err) {
+		if err = os.Mkdir(C.Path.LogPath(), os.ModePerm); err != nil {
+			log.Errorln(err.Error())
+		}
+	}
+
 	statistic.RestoreChannelsData(CurrentMonthStatisticFileName())
 	s := gocron.NewScheduler(time.Local)
 	s.Every(10).Minutes().Do(func() {

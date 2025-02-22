@@ -30,17 +30,16 @@ var Path = func() *path {
 	if err != nil {
 		log.Panic(err)
 	}
-	homeDir := filepath.Dir(ex)
-
-	homeDir = P.Join(homeDir, "config")
-
-	return &path{homeDir: homeDir, configFile: P.Join(homeDir, "config.yaml"), allowUnsafePath: allowUnsafePath}
+	currentDir := filepath.Dir(ex)
+	homeDir := P.Join(currentDir, "config")
+	return &path{homeDir: homeDir, configFile: P.Join(homeDir, "config.yaml"), allowUnsafePath: allowUnsafePath, currentDir: currentDir}
 }()
 
 type path struct {
 	homeDir         string
 	configFile      string
 	allowUnsafePath bool
+	currentDir      string
 }
 
 // SetHomeDir is used to set the configuration path
@@ -189,4 +188,8 @@ func (p *path) GetExecutableFullPath() string {
 
 func (p *path) StatisticPath() string {
 	return P.Join(p.homeDir, "statistic")
+}
+
+func (p *path) LogPath() string {
+	return P.Join(p.currentDir, "log")
 }

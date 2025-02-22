@@ -103,15 +103,13 @@ func SetLevel(newLevel LogLevel) {
 }
 
 func SetOutput(file string, maxSize, maxBackups, maxAge int, compress bool) {
-	if file != "" {
-		log.SetOutput(&lumberjack.Logger{
-			Filename:   file,
-			MaxSize:    maxSize, // megabytes
-			MaxBackups: maxBackups,
-			MaxAge:     maxAge,   //days
-			Compress:   compress, // disabled by default
-		})
-	}
+	log.SetOutput(&lumberjack.Logger{
+		Filename:   file,
+		MaxSize:    maxSize, // megabytes
+		MaxBackups: maxBackups,
+		MaxAge:     maxAge,   //days
+		Compress:   compress, // disabled by default
+	})
 }
 
 func print(data Event) {

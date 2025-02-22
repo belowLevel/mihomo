@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/netip"
 	"net/url"
+	"path/filepath"
 	"strings"
 	"time"
 	_ "unsafe"
@@ -312,7 +313,6 @@ type RawTuicServer struct {
 }
 
 type Log struct {
-	File       string       `yaml:"file"`
 	Level      log.LogLevel `yaml:"level"`
 	MaxSize    int          `json:"maxsize" yaml:"maxsize"`
 	MaxBackups int          `json:"maxbackups" yaml:"maxbackups"`
@@ -458,7 +458,7 @@ func Parse(buf []byte) (*Config, error) {
 	}
 
 	log.SetLevel(rawCfg.Log.Level)
-	log.SetOutput(rawCfg.Log.File, rawCfg.Log.MaxSize,
+	log.SetOutput(filepath.Join(C.Path.LogPath(), "log.txt"), rawCfg.Log.MaxSize,
 		rawCfg.Log.MaxBackups, rawCfg.Log.MaxAge, rawCfg.Log.Compress)
 
 	return ParseRawConfig(rawCfg)
