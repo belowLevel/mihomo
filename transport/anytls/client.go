@@ -22,19 +22,19 @@ type ClientConfig struct {
 	Password                 string
 	IdleSessionCheckInterval time.Duration
 	IdleSessionTimeout       time.Duration
+	MinIdleSession           int
 	Server                   M.Socksaddr
 	Dialer                   N.Dialer
 	TLSConfig                *vmess.TLSConfig
 }
 
 type Client struct {
-	passwordSha256    []byte
-	tlsConfig         *vmess.TLSConfig
-	clientFingerprint string
-	dialer            N.Dialer
-	server            M.Socksaddr
-	sessionClient     *session.Client
-	padding           atomic.TypedValue[*padding.PaddingFactory]
+	passwordSha256 []byte
+	tlsConfig      *vmess.TLSConfig
+	dialer         N.Dialer
+	server         M.Socksaddr
+	sessionClient  *session.Client
+	padding        atomic.TypedValue[*padding.PaddingFactory]
 }
 
 func NewClient(ctx context.Context, config ClientConfig) *Client {
@@ -47,7 +47,7 @@ func NewClient(ctx context.Context, config ClientConfig) *Client {
 	}
 	// Initialize the padding state of this client
 	padding.UpdatePaddingScheme(padding.DefaultPaddingScheme, &c.padding)
-	c.sessionClient = session.NewClient(ctx, c.CreateOutboundTLSConnection, &c.padding, config.IdleSessionCheckInterval, config.IdleSessionTimeout)
+	c.sessionClient = session.NewClient(ctx, c.CreateOutboundTLSConnection, &c.padding, config.IdleSessionCheckInterval, config.IdleSessionTimeout, config.MinIdleSession)
 	return c
 }
 
@@ -71,6 +71,8 @@ func (c *Client) CreateOutboundTLSConnection(ctx context.Context) (net.Conn, err
 	}
 
 	b := buf.NewPacket()
+	defer b.Release()
+
 	b.Write(c.passwordSha256)
 	var paddingLen int
 	if pad := c.padding.Load().GenerateRecordPayloadSizes(0); len(pad) > 0 {
