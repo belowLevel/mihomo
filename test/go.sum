@@ -167,6 +167,7 @@ github.com/metacubex/sing-tun v0.4.5/go.mod h1:V0N4rr0dWPBEE20ESkTXdbtx2riQYcb6Y
 github.com/metacubex/sing-vmess v0.1.9-0.20240719134745-1df6fb20bbf9 h1:OAXiCosqY8xKDp3pqTW3qbrCprZ1l6WkrXSFSCwyY4I=
 github.com/metacubex/sing-vmess v0.1.9-0.20240719134745-1df6fb20bbf9/go.mod h1:olVkD4FChQ5gKMHG4ZzuD7+fMkJY1G8vwOKpRehjrmY=
 github.com/metacubex/sing-vmess v0.1.14-0.20250203033000-f61322b3dbe3/go.mod h1:nE7Mdzj/QUDwgRi/8BASPtsxtIFZTHA4Yst5GgwbGCQ=
+github.com/metacubex/sing-vmess v0.1.14-0.20250228002636-abc39e113b82/go.mod h1:nE7Mdzj/QUDwgRi/8BASPtsxtIFZTHA4Yst5GgwbGCQ=
 github.com/metacubex/sing-wireguard v0.0.0-20240618022557-a6efaa37127a h1:NpSGclHJUYndUwBmyIpFBSoBVg8PoVX7QQKhYg0DjM0=
 github.com/metacubex/sing-wireguard v0.0.0-20240618022557-a6efaa37127a/go.mod h1:uY+BYb0UEknLrqvbGcwi9i++KgrKxsurysgI6G1Pveo=
 github.com/metacubex/sing-wireguard v0.0.0-20240826061955-1e4e67afe5cd/go.mod h1:uY+BYb0UEknLrqvbGcwi9i++KgrKxsurysgI6G1Pveo=
@@ -245,6 +246,7 @@ github.com/sagernet/sing v0.5.0-alpha.13/go.mod h1:ARkL0gM13/Iv5VCZmci/NuoOlePoI
 github.com/sagernet/sing v0.5.0-rc.4/go.mod h1:ARkL0gM13/Iv5VCZmci/NuoOlePoIsW0m7BWfln/Hak=
 github.com/sagernet/sing v0.5.0/go.mod h1:ARkL0gM13/Iv5VCZmci/NuoOlePoIsW0m7BWfln/Hak=
 github.com/sagernet/sing v0.5.1/go.mod h1:ARkL0gM13/Iv5VCZmci/NuoOlePoIsW0m7BWfln/Hak=
+github.com/sagernet/sing v0.5.2/go.mod h1:ARkL0gM13/Iv5VCZmci/NuoOlePoIsW0m7BWfln/Hak=
 github.com/sagernet/sing-mux v0.2.1-0.20240124034317-9bfb33698bb6 h1:5bCAkvDDzSMITiHFjolBwpdqYsvycdTu71FsMEFXQ14=
 github.com/sagernet/sing-mux v0.2.1-0.20240124034317-9bfb33698bb6/go.mod h1:khzr9AOPocLa+g53dBplwNDz4gdsyx/YM3swtAhlkHQ=
 github.com/sagernet/sing-mux v0.2.1/go.mod h1:dm3BWL6NvES9pbib7llpylrq7Gq+LjlzG+0RacdxcyE=
