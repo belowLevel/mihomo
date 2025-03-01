@@ -7,7 +7,7 @@ import (
 	"github.com/metacubex/mihomo/adapter/inbound"
 	C "github.com/metacubex/mihomo/constant"
 	authStore "github.com/metacubex/mihomo/listener/auth"
-	log "github.com/sirupsen/logrus"
+	"github.com/metacubex/mihomo/log"
 	gossh "golang.org/x/crypto/ssh"
 	"net"
 	"time"
@@ -77,8 +77,7 @@ func passwordHandler(ctx ssh.Context, password string) bool {
 
 func sshConnectionFailed(conn net.Conn, err error) {
 	// Log the underlying error with a specific message
-	log.Warnf("ssh: Failed connection from %s with error: %v", conn.RemoteAddr(), err)
-
+	log.Warnln("ssh: Failed connection from %s with error: %v", conn.RemoteAddr(), err)
 }
 
 func DirectTCPIPHandler(srv *ssh.Server, conn *gossh.ServerConn, newChan gossh.NewChannel, ctx ssh.Context) {

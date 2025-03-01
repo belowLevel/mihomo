@@ -95,11 +95,10 @@ type SynDrive struct {
 }
 
 type WanInput struct {
-	Port           int       `yaml:"port"`
-	Authentication []string  `yaml:"authentication"`
-	SshProxy       *SSHProxy `yaml:"ssh"`
-	TlsProxy       *TLSProxy `yaml:"tls"`
-	Syndrive       *SynDrive `yaml:"syn-drive"`
+	Port     int       `yaml:"port"`
+	SshProxy *SSHProxy `yaml:"ssh"`
+	TlsProxy *TLSProxy `yaml:"tls"`
+	Syndrive *SynDrive `yaml:"syn-drive"`
 }
 
 func parseAddr(addr net.Addr) (net.IP, int, error) {
