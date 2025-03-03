@@ -61,7 +61,7 @@ external-controller-tls: 0.0.0.0:9443 # RESTful API HTTPS 监听地址，需要�
 # RESTful API CORS标头配置
 external-controller-cors:
   allow-origins:
-    - *
+    - "*"
   allow-private-network: true
 
 # RESTful API Unix socket 监听地址（ windows版本大于17063也可以使用，即大于等于1803/RS4版本即可使用 ）
@@ -78,6 +78,7 @@ external-controller-pipe: \\.\pipe\mihomo
 # 配置 WEB UI 目录，使用 http://{{external-controller}}/ui 访问
 external-ui: /path/to/ui/folder/
 external-ui-name: xd
+# 目前支持下载zip,tgz格式的压缩包
 external-ui-url: "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
 
 # 在RESTful API端口上开启DOH服务器
@@ -863,6 +864,23 @@ proxies: # socks5
     # 可以使用的值包括 MULTIPLEXING_OFF, MULTIPLEXING_LOW, MULTIPLEXING_MIDDLE, MULTIPLEXING_HIGH。其中 MULTIPLEXING_OFF 会关闭多路复用功能。默认值为 MULTIPLEXING_LOW。
     # multiplexing: MULTIPLEXING_LOW
 
+  # anytls
+  - name: anytls
+    type: anytls
+    server: 1.2.3.4
+    port: 443
+    password: "<your password>"
+    # client-fingerprint: chrome
+    udp: true
+    # idle-session-check-interval: 30 # seconds
+    # idle-session-timeout: 30 # seconds
+    # min-idle-session: 0
+    # sni: "example.com"
+    # alpn:
+    #   - h2
+    #   - http/1.1
+    # skip-cert-verify: true
+
 # dns 出站会将请求劫持到内部 dns 模块，所有请求均在内部处理
   - name: "dns-out"
     type: dns
@@ -1078,7 +1096,7 @@ sub-rules:
 listeners:
   - name: socks5-in-1
     type: socks
-    port: 10808
+    port: 10808 # 支持使用ports格式，例如200,302 or 200,204,401-429,501-503
     #listen: 0.0.0.0 # 默认监听 0.0.0.0
     # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
     # proxy: proxy # 如果不为空则直接将该入站流量交由指定 proxy 处理
@@ -1086,20 +1104,26 @@ listeners:
     # users: # 如果不填写users项，则遵从全局authentication设置，如果填写会忽略全局设置, 如想跳过该入站的验证可填写 users: []
     #   - username: aaa
     #     password: aaa
+    # 下面两项如果填写则开启 tls（需要同时填写）
+    # certificate: ./server.crt
+    # private-key: ./server.key
 
   - name: http-in-1
     type: http
-    port: 10809
+    port: 10809 # 支持使用ports格式，例如200,302 or 200,204,401-429,501-503
     listen: 0.0.0.0
     # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
     # proxy: proxy # 如果不为空则直接将该入站流量交由指定 proxy 处理 (当 proxy 不为空时，这里的 proxy 名称必须合法，否则会出错)
     # users: # 如果不填写users项，则遵从全局authentication设置，如果填写会忽略全局设置, 如想跳过该入站的验证可填写 users: []
     #   - username: aaa
     #     password: aaa
+    # 下面两项如果填写则开启 tls（需要同时填写）
+    # certificate: ./server.crt
+    # private-key: ./server.key
 
   - name: mixed-in-1
     type: mixed #  HTTP(S) 和 SOCKS 代理混合
-    port: 10810
+    port: 10810 # 支持使用ports格式，例如200,302 or 200,204,401-429,501-503
     listen: 0.0.0.0
     # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
     # proxy: proxy # 如果不为空则直接将该入站流量交由指定 proxy 处理 (当 proxy 不为空时，这里的 proxy 名称必须合法，否则会出错)
@@ -1107,17 +1131,20 @@ listeners:
     # users: # 如果不填写users项，则遵从全局authentication设置，如果填写会忽略全局设置, 如想跳过该入站的验证可填写 users: []
     #   - username: aaa
     #     password: aaa
+    # 下面两项如果填写则开启 tls（需要同时填写）
+    # certificate: ./server.crt
+    # private-key: ./server.key
 
   - name: reidr-in-1
     type: redir
-    port: 10811
+    port: 10811 # 支持使用ports格式，例如200,302 or 200,204,401-429,501-503
     listen: 0.0.0.0
     # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
     # proxy: proxy # 如果不为空则直接将该入站流量交由指定 proxy 处理 (当 proxy 不为空时，这里的 proxy 名称必须合法，否则会出错)
 
   - name: tproxy-in-1
     type: tproxy
-    port: 10812
+    port: 10812 # 支持使用ports格式，例如200,302 or 200,204,401-429,501-503
     listen: 0.0.0.0
     # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
     # proxy: proxy # 如果不为空则直接将该入站流量交由指定 proxy 处理 (当 proxy 不为空时，这里的 proxy 名称必须合法，否则会出错)
@@ -1125,7 +1152,7 @@ listeners:
 
   - name: shadowsocks-in-1
     type: shadowsocks
-    port: 10813
+    port: 10813 # 支持使用ports格式，例如200,302 or 200,204,401-429,501-503
     listen: 0.0.0.0
     # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
     # proxy: proxy # 如果不为空则直接将该入站流量交由指定 proxy 处理 (当 proxy 不为空时，这里的 proxy 名称必须合法，否则会出错)
@@ -1134,7 +1161,7 @@ listeners:
 
   - name: vmess-in-1
     type: vmess
-    port: 10814
+    port: 10814 # 支持使用ports格式，例如200,302 or 200,204,401-429,501-503
     listen: 0.0.0.0
     # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
     # proxy: proxy # 如果不为空则直接将该入站流量交由指定 proxy 处理 (当 proxy 不为空时，这里的 proxy 名称必须合法，否则会出错)
@@ -1143,6 +1170,7 @@ listeners:
         uuid: 9d0cb9d0-964f-4ef6-897d-6c6b3ccf9e68
         alterId: 1
     # ws-path: "/" # 如果不为空则开启 websocket 传输层
+    # grpc-service-name: "GunService" # 如果不为空则开启 grpc 传输层
     # 下面两项如果填写则开启 tls（需要同时填写）
     # certificate: ./server.crt
     # private-key: ./server.key
@@ -1157,7 +1185,7 @@ listeners:
 
   - name: tuic-in-1
     type: tuic
-    port: 10815
+    port: 10815 # 支持使用ports格式，例如200,302 or 200,204,401-429,501-503
     listen: 0.0.0.0
     # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
     # proxy: proxy # 如果不为空则直接将该入站流量交由指定 proxy 处理 (当 proxy 不为空时，这里的 proxy 名称必须合法，否则会出错)
@@ -1177,7 +1205,7 @@ listeners:
 
   - name: tunnel-in-1
     type: tunnel
-    port: 10816
+    port: 10816 # 支持使用ports格式，例如200,302 or 200,204,401-429,501-503
     listen: 0.0.0.0
     # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
     # proxy: proxy # 如果不为空则直接将该入站流量交由指定 proxy 处理 (当 proxy 不为空时，这里的 proxy 名称必须合法，否则会出错)
@@ -1186,7 +1214,7 @@ listeners:
 
   - name: vless-in-1
     type: vless
-    port: 10817
+    port: 10817 # 支持使用ports格式，例如200,302 or 200,204,401-429,501-503
     listen: 0.0.0.0
     # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
     # proxy: proxy # 如果不为空则直接将该入站流量交由指定 proxy 处理 (当 proxy 不为空时，这里的 proxy 名称必须合法，否则会出错)
@@ -1195,6 +1223,7 @@ listeners:
         uuid: 9d0cb9d0-964f-4ef6-897d-6c6b3ccf9e68
         flow: xtls-rprx-vision
     # ws-path: "/" # 如果不为空则开启 websocket 传输层
+    # grpc-service-name: "GunService" # 如果不为空则开启 grpc 传输层
     # 下面两项如果填写则开启 tls（需要同时填写）
     # certificate: ./server.crt
     # private-key: ./server.key
@@ -1207,6 +1236,46 @@ listeners:
       server-names:
         - test.com
     ### 注意，对于vless listener, 至少需要填写 “certificate和private-key” 或 “reality-config” 的其中一项 ###
+
+  - name: anytls-in-1
+    type: anytls
+    port: 10818 # 支持使用ports格式，例如200,302 or 200,204,401-429,501-503
+    listen: 0.0.0.0
+    users:
+      username1: password1
+      username2: password2
+    # "certificate" and "private-key" are required
+    certificate: ./server.crt
+    private-key: ./server.key
+    # padding-scheme: "" # https://github.com/anytls/anytls-go/blob/main/docs/protocol.md#cmdupdatepaddingscheme
+
+  - name: trojan-in-1
+    type: trojan
+    port: 10819 # 支持使用ports格式，例如200,302 or 200,204,401-429,501-503
+    listen: 0.0.0.0
+    # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
+    # proxy: proxy # 如果不为空则直接将该入站流量交由指定 proxy 处理 (当 proxy 不为空时，这里的 proxy 名称必须合法，否则会出错)
+    users:
+      - username: 1
+        password: 9d0cb9d0-964f-4ef6-897d-6c6b3ccf9e68
+    # ws-path: "/" # 如果不为空则开启 websocket 传输层
+    # grpc-service-name: "GunService" # 如果不为空则开启 grpc 传输层
+    # 下面两项如果填写则开启 tls（需要同时填写）
+    certificate: ./server.crt
+    private-key: ./server.key
+    # 如果填写reality-config则开启reality（注意不可与certificate和private-key同时填写）
+    # reality-config:
+    #   dest: test.com:443
+    #   private-key: jNXHt1yRo0vDuchQlIP6Z0ZvjT3KtzVI-T4E7RoLJS0 # 可由 mihomo generate reality-keypair 命令生成
+    #   short-id:
+    #     - 0123456789abcdef
+    #   server-names:
+    #     - test.com
+    # ss-option: # like trojan-go's `shadowsocks` config
+    #   enabled: false
+    #   method: aes-128-gcm # aes-128-gcm/aes-256-gcm/chacha20-ietf-poly1305
+    #   password: "example"
+    ### 注意，对于trojan listener, 至少需要填写 “certificate和private-key” 或 “reality-config” 或 “ss-option” 的其中一项 ###
 
   - name: tun-in-1
     type: tun
