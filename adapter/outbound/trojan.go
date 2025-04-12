@@ -3,17 +3,20 @@ package outbound
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"strconv"
 
+	N "github.com/metacubex/mihomo/common/net"
 	"github.com/metacubex/mihomo/component/ca"
 	"github.com/metacubex/mihomo/component/dialer"
 	"github.com/metacubex/mihomo/component/proxydialer"
 	tlsC "github.com/metacubex/mihomo/component/tls"
 	C "github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/transport/gun"
+	"github.com/metacubex/mihomo/transport/shadowsocks/core"
 	"github.com/metacubex/mihomo/transport/trojan"
 )
 
@@ -28,6 +31,8 @@ type Trojan struct {
 	transport    *gun.TransportWrap
 
 	realityConfig *tlsC.RealityConfig
+
+	ssCipher core.Cipher
 }
 
 type TrojanOption struct {
@@ -45,7 +50,15 @@ type TrojanOption struct {
 	RealityOpts       RealityOptions `proxy:"reality-opts,omitempty"`
 	GrpcOpts          GrpcOptions    `proxy:"grpc-opts,omitempty"`
 	WSOpts            WSOptions      `proxy:"ws-opts,omitempty"`
+	SSOpts            TrojanSSOption `proxy:"ss-opts,omitempty"`
 	ClientFingerprint string         `proxy:"client-fingerprint,omitempty"`
+}
+
+// TrojanSSOption from https://github.com/p4gefau1t/trojan-go/blob/v0.10.6/tunnel/shadowsocks/config.go#L5
+type TrojanSSOption struct {
+	Enabled  bool   `proxy:"enabled,omitempty"`
+	Method   string `proxy:"method,omitempty"`
+	Password string `proxy:"password,omitempty"`
 }
 
 func (t *Trojan) plainStream(ctx context.Context, c net.Conn) (net.Conn, error) {
@@ -94,12 +107,25 @@ func (t *Trojan) StreamConnContext(ctx context.Context, c net.Conn, metadata *C.
 		return nil, fmt.Errorf("%s connect error: %w", t.addr, err)
 	}
 
-	if metadata.NetWork == C.UDP {
-		err = t.instance.WriteHeader(c, trojan.CommandUDP, serializesSocksAddr(metadata))
-		return c, err
+	if t.ssCipher != nil {
+		c = t.ssCipher.StreamConn(c)
 	}
-	err = t.instance.WriteHeader(c, trojan.CommandTCP, serializesSocksAddr(metadata))
+
+	err = t.writeHeaderContext(ctx, c, metadata)
 	return c, err
+}
+
+func (t *Trojan) writeHeaderContext(ctx context.Context, c net.Conn, metadata *C.Metadata) (err error) {
+	if ctx.Done() != nil {
+		done := N.SetupContextForConn(ctx, c)
+		defer done(&err)
+	}
+	command := trojan.CommandTCP
+	if metadata.NetWork == C.UDP {
+		command = trojan.CommandUDP
+	}
+	err = t.instance.WriteHeader(c, command, serializesSocksAddr(metadata))
+	return err
 }
 
 // DialContext implements C.ProxyAdapter
@@ -111,7 +137,11 @@ func (t *Trojan) DialContext(ctx context.Context, metadata *C.Metadata, opts ...
 			return nil, err
 		}
 
-		if err = t.instance.WriteHeader(c, trojan.CommandTCP, serializesSocksAddr(metadata)); err != nil {
+		if t.ssCipher != nil {
+			c = t.ssCipher.StreamConn(c)
+		}
+
+		if err = t.writeHeaderContext(ctx, c, metadata); err != nil {
 			c.Close()
 			return nil, err
 		}
@@ -159,7 +189,12 @@ func (t *Trojan) ListenPacketContext(ctx context.Context, metadata *C.Metadata, 
 		defer func(c net.Conn) {
 			safeConnClose(c, err)
 		}(c)
-		err = t.instance.WriteHeader(c, trojan.CommandUDP, serializesSocksAddr(metadata))
+
+		if t.ssCipher != nil {
+			c = t.ssCipher.StreamConn(c)
+		}
+
+		err = t.writeHeaderContext(ctx, c, metadata)
 		if err != nil {
 			return nil, err
 		}
@@ -190,7 +225,11 @@ func (t *Trojan) ListenPacketWithDialer(ctx context.Context, dialer C.Dialer, me
 		return nil, fmt.Errorf("%s connect error: %w", t.addr, err)
 	}
 
-	err = t.instance.WriteHeader(c, trojan.CommandUDP, serializesSocksAddr(metadata))
+	if t.ssCipher != nil {
+		c = t.ssCipher.StreamConn(c)
+	}
+
+	err = t.writeHeaderContext(ctx, c, metadata)
 	if err != nil {
 		return nil, err
 	}
@@ -268,6 +307,20 @@ func NewTrojan(option TrojanOption) (*Trojan, error) {
 		return nil, err
 	}
 	tOption.Reality = t.realityConfig
+
+	if option.SSOpts.Enabled {
+		if option.SSOpts.Password == "" {
+			return nil, errors.New("empty password")
+		}
+		if option.SSOpts.Method == "" {
+			option.SSOpts.Method = "AES-128-GCM"
+		}
+		ciph, err := core.PickCipher(option.SSOpts.Method, nil, option.SSOpts.Password)
+		if err != nil {
+			return nil, err
+		}
+		t.ssCipher = ciph
+	}
 
 	if option.Network == "grpc" {
 		dialFn := func(ctx context.Context, network, addr string) (net.Conn, error) {
