@@ -11,6 +11,7 @@ import (
 )
 
 func testInboundVless(t *testing.T, inboundOptions inbound.VlessOption, outboundOptions outbound.VlessOption) {
+	t.Parallel()
 	inboundOptions.BaseOption = inbound.BaseOption{
 		NameStr: "vless_inbound",
 		Listen:  "127.0.0.1",
@@ -20,17 +21,23 @@ func testInboundVless(t *testing.T, inboundOptions inbound.VlessOption, outbound
 		{Username: "test", UUID: userUUID, Flow: "xtls-rprx-vision"},
 	}
 	in, err := inbound.NewVless(&inboundOptions)
-	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		return
+	}
 
 	tunnel := NewHttpTestTunnel()
 	defer tunnel.Close()
 
 	err = in.Listen(tunnel)
-	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		return
+	}
 	defer in.Close()
 
 	addrPort, err := netip.ParseAddrPort(in.Address())
-	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		return
+	}
 
 	outboundOptions.Name = "vless_outbound"
 	outboundOptions.Server = addrPort.Addr().String()
@@ -38,7 +45,9 @@ func testInboundVless(t *testing.T, inboundOptions inbound.VlessOption, outbound
 	outboundOptions.UUID = userUUID
 
 	out, err := outbound.NewVless(outboundOptions)
-	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		return
+	}
 	defer out.Close()
 
 	tunnel.DoTest(t, out)

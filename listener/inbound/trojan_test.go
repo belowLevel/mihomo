@@ -11,6 +11,7 @@ import (
 )
 
 func testInboundTrojan(t *testing.T, inboundOptions inbound.TrojanOption, outboundOptions outbound.TrojanOption) {
+	t.Parallel()
 	inboundOptions.BaseOption = inbound.BaseOption{
 		NameStr: "trojan_inbound",
 		Listen:  "127.0.0.1",
@@ -20,17 +21,23 @@ func testInboundTrojan(t *testing.T, inboundOptions inbound.TrojanOption, outbou
 		{Username: "test", Password: userUUID},
 	}
 	in, err := inbound.NewTrojan(&inboundOptions)
-	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		return
+	}
 
 	tunnel := NewHttpTestTunnel()
 	defer tunnel.Close()
 
 	err = in.Listen(tunnel)
-	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		return
+	}
 	defer in.Close()
 
 	addrPort, err := netip.ParseAddrPort(in.Address())
-	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		return
+	}
 
 	outboundOptions.Name = "trojan_outbound"
 	outboundOptions.Server = addrPort.Addr().String()
@@ -38,7 +45,9 @@ func testInboundTrojan(t *testing.T, inboundOptions inbound.TrojanOption, outbou
 	outboundOptions.Password = userUUID
 
 	out, err := outbound.NewTrojan(outboundOptions)
-	assert.NoError(t, err)
+	if !assert.NoError(t, err) {
+		return
+	}
 	defer out.Close()
 
 	tunnel.DoTest(t, out)
