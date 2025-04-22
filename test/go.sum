@@ -135,6 +135,7 @@ github.com/mdlayher/socket v0.5.1/go.mod h1:TjPLHI1UgwEv5J1B5q0zTZq12A/6H7nKmtTa
 github.com/metacubex/chacha v0.1.0 h1:tg9RSJ18NvL38cCWNyYH1eiG6qDCyyXIaTLQthon0sc=
 github.com/metacubex/chacha v0.1.0/go.mod h1:Djn9bPZxLTXbJFSeyo0/qzEzQI+gUSSzttuzZM75GH8=
 github.com/metacubex/chacha v0.1.1/go.mod h1:Djn9bPZxLTXbJFSeyo0/qzEzQI+gUSSzttuzZM75GH8=
+github.com/metacubex/chacha v0.1.2/go.mod h1:Djn9bPZxLTXbJFSeyo0/qzEzQI+gUSSzttuzZM75GH8=
 github.com/metacubex/gopacket v1.1.20-0.20230608035415-7e2f98a3e759 h1:cjd4biTvOzK9ubNCCkQ+ldc4YSH/rILn53l/xGBFHHI=
 github.com/metacubex/gopacket v1.1.20-0.20230608035415-7e2f98a3e759/go.mod h1:UHOv2xu+RIgLwpXca7TLrXleEd4oR3sPatW6IF8wU88=
 github.com/metacubex/gvisor v0.0.0-20240320004321-933faba989ec h1:HxreOiFTUrJXJautEo8rnE1uKTVGY8wtZepY1Tii/Nc=
@@ -148,6 +149,7 @@ github.com/metacubex/quic-go v0.48.1-0.20241021013658-51ca987e0174/go.mod h1:AiZ
 github.com/metacubex/quic-go v0.48.2-0.20241105005628-a3e65bac65b2/go.mod h1:AiZ+UPgrkO1DTnmiAX4b+kRoV1Vfc65UkYD7RbFlIZA=
 github.com/metacubex/quic-go v0.48.3-0.20241126053724-b69fea3888da/go.mod h1:AiZ+UPgrkO1DTnmiAX4b+kRoV1Vfc65UkYD7RbFlIZA=
 github.com/metacubex/quic-go v0.49.1-0.20250212162123-c135a4412996/go.mod h1:ExVjGyEwTUjCFqx+5uxgV7MOoA3fZI+th4D40H35xmY=
+github.com/metacubex/quic-go v0.51.1-0.20250421134811-7b4054ad1c06/go.mod h1:9R1NOzCgTcWsdWvOMlmtMuF0uKzuOpsfvEf7U3I8zM0=
 github.com/metacubex/randv2 v0.2.0 h1:uP38uBvV2SxYfLj53kuvAjbND4RUDfFJjwr4UigMiLs=
 github.com/metacubex/randv2 v0.2.0/go.mod h1:kFi2SzrQ5WuneuoLLCMkABtiBu6VRrMrWFqSPyj2cxY=
 github.com/metacubex/sing-quic v0.0.0-20240518034124-7696d3f7da72 h1:Wr4g1HCb5Z/QIFwFiVNjO2qL+dRu25+Mdn9xtAZZ+ew=
@@ -155,6 +157,7 @@ github.com/metacubex/sing-quic v0.0.0-20240518034124-7696d3f7da72/go.mod h1:g7Mx
 github.com/metacubex/sing-quic v0.0.0-20240827003841-cd97758ed8b4/go.mod h1:g7Mxj7b7zm7YVqD975mk/hSmrb0A0G4bVvIMr2MMzn8=
 github.com/metacubex/sing-quic v0.0.0-20250119013740-2a19cce83925/go.mod h1:g7Mxj7b7zm7YVqD975mk/hSmrb0A0G4bVvIMr2MMzn8=
 github.com/metacubex/sing-quic v0.0.0-20250404030904-b2cc8aab562c/go.mod h1:g7Mxj7b7zm7YVqD975mk/hSmrb0A0G4bVvIMr2MMzn8=
+github.com/metacubex/sing-quic v0.0.0-20250421142834-9de457d11557/go.mod h1:GUYUT+3v6Re4XZeSzwu7UcSf8S9jOQaw8YEsY5ehNTI=
 github.com/metacubex/sing-shadowsocks v0.2.8 h1:wIhlaigswzjPw4hej75sEvWte3QR0+AJRafgwBHO5B4=
 github.com/metacubex/sing-shadowsocks v0.2.8/go.mod h1:X3x88XtJpBxG0W0/ECOJL6Ib0SJ3xdniAkU/6/RMWU0=
 github.com/metacubex/sing-shadowsocks2 v0.2.2 h1:eaf42uVx4Lr21S6MDYs0ZdTvGA0GEhDpb9no4+gdXPo=
@@ -169,6 +172,7 @@ github.com/metacubex/sing-tun v0.4.5/go.mod h1:V0N4rr0dWPBEE20ESkTXdbtx2riQYcb6Y
 github.com/metacubex/sing-tun v0.4.6-0.20250312042506-6d3b4dc05c04/go.mod h1:V0N4rr0dWPBEE20ESkTXdbtx2riQYcb6YtwC5w/9wl0=
 github.com/metacubex/sing-tun v0.4.6-0.20250402154347-cff06ec2a65b/go.mod h1:V0N4rr0dWPBEE20ESkTXdbtx2riQYcb6YtwC5w/9wl0=
 github.com/metacubex/sing-tun v0.4.6-0.20250408111348-d1d90a8d694b/go.mod h1:V0N4rr0dWPBEE20ESkTXdbtx2riQYcb6YtwC5w/9wl0=
+github.com/metacubex/sing-tun v0.4.6-0.20250412144348-c426cb167db5/go.mod h1:V0N4rr0dWPBEE20ESkTXdbtx2riQYcb6YtwC5w/9wl0=
 github.com/metacubex/sing-vmess v0.1.9-0.20240719134745-1df6fb20bbf9 h1:OAXiCosqY8xKDp3pqTW3qbrCprZ1l6WkrXSFSCwyY4I=
 github.com/metacubex/sing-vmess v0.1.9-0.20240719134745-1df6fb20bbf9/go.mod h1:olVkD4FChQ5gKMHG4ZzuD7+fMkJY1G8vwOKpRehjrmY=
 github.com/metacubex/sing-vmess v0.1.14-0.20250203033000-f61322b3dbe3/go.mod h1:nE7Mdzj/QUDwgRi/8BASPtsxtIFZTHA4Yst5GgwbGCQ=
@@ -188,6 +192,7 @@ github.com/metacubex/utls v1.6.6 h1:3D12YKHTf2Z41UPhQU2dWerNWJ5TVQD9gKoQ+H+iLC8=
 github.com/metacubex/utls v1.6.6/go.mod h1:+WLFUnXjcpdxXCnyX25nggw8C6YonZ8zOK2Zm/oRvdo=
 github.com/metacubex/utls v1.6.8-alpha.4/go.mod h1:MEZ5WO/VLKYs/s/dOzEK/mlXOQxc04ESeLzRgjmLYtk=
 github.com/metacubex/utls v1.6.8-alpha.5/go.mod h1:MEZ5WO/VLKYs/s/dOzEK/mlXOQxc04ESeLzRgjmLYtk=
+github.com/metacubex/utls v1.7.0-alpha.1/go.mod h1:oknYT0qTOwE4hjPmZOEpzVdefnW7bAdGLvZcqmk4TLU=
 github.com/miekg/dns v1.1.61 h1:nLxbwF3XxhwVSm8g9Dghm9MHPaUZuqhPiGL+675ZmEs=
 github.com/miekg/dns v1.1.61/go.mod h1:mnAarhS3nWaW+NVP2wTkYVIZyHNJ098SJZUki3eykwQ=
 github.com/miekg/dns v1.1.62/go.mod h1:mvDlcItzm+br7MToIKqkglaGhlFMHJ9DTNNWONWXbNQ=

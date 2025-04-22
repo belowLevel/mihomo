@@ -61,19 +61,19 @@ require (
 	github.com/mastercactapus/proxyprotocol v0.0.4 // indirect
 	github.com/mdlayher/netlink v1.7.2 // indirect
 	github.com/mdlayher/socket v0.5.1 // indirect
-	github.com/metacubex/chacha v0.1.1 // indirect
+	github.com/metacubex/chacha v0.1.2 // indirect
 	github.com/metacubex/gopacket v1.1.20-0.20230608035415-7e2f98a3e759 // indirect
 	github.com/metacubex/gvisor v0.0.0-20250324165734-5857f47bd43b // indirect
-	github.com/metacubex/quic-go v0.49.1-0.20250212162123-c135a4412996 // indirect
+	github.com/metacubex/quic-go v0.51.1-0.20250421134811-7b4054ad1c06 // indirect
 	github.com/metacubex/randv2 v0.2.0 // indirect
-	github.com/metacubex/sing-quic v0.0.0-20250404030904-b2cc8aab562c // indirect
+	github.com/metacubex/sing-quic v0.0.0-20250421142834-9de457d11557 // indirect
 	github.com/metacubex/sing-shadowsocks v0.2.8 // indirect
 	github.com/metacubex/sing-shadowsocks2 v0.2.2 // indirect
-	github.com/metacubex/sing-tun v0.4.6-0.20250408111348-d1d90a8d694b // indirect
+	github.com/metacubex/sing-tun v0.4.6-0.20250412144348-c426cb167db5 // indirect
 	github.com/metacubex/sing-vmess v0.1.14-0.20250228002636-abc39e113b82 // indirect
 	github.com/metacubex/sing-wireguard v0.0.0-20241126021510-0827d417b589 // indirect
 	github.com/metacubex/tfo-go v0.0.0-20241231083714-66613d49c422 // indirect
-	github.com/metacubex/utls v1.6.8-alpha.5 // indirect
+	github.com/metacubex/utls v1.7.0-alpha.1 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/mroth/weightedrand/v2 v2.1.0 // indirect
