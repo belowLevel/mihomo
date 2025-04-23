@@ -89,7 +89,7 @@ func (b Builder) NewListener(l net.Listener) net.Listener {
 		// We fixed it by calling Close() directly.
 		return realityConnWrapper{c}, nil
 	}, func(a any) {
-		log.Errorln("reality server panic:", a)
+		log.Errorln("reality server panic: %s", a)
 	})
 }
 
