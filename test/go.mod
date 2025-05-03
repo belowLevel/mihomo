@@ -18,7 +18,7 @@ replace github.com/metacubex/mihomo => ../
 require (
 	github.com/3andne/restls-client-go v0.1.6 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
-	github.com/RyuaNerin/go-krypto v1.2.4 // indirect
+	github.com/RyuaNerin/go-krypto v1.3.0 // indirect
 	github.com/Yawning/aez v0.0.0-20211027044916-e49e68abd344 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
@@ -31,11 +31,11 @@ require (
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/go-units v0.4.0 // indirect
-	github.com/ericlagergren/aegis v0.0.0-20230312195928-b4ce538b56f9 // indirect
+	github.com/ericlagergren/aegis v0.0.0-20250325060835-cd0defd64358 // indirect
 	github.com/ericlagergren/polyval v0.0.0-20230805202542-18692a1b76f9 // indirect
 	github.com/ericlagergren/siv v0.0.0-20220507050439-0b757b3aa5f1 // indirect
 	github.com/ericlagergren/subtle v0.0.0-20220507045147-890d697da010 // indirect
-	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gaukas/godicttls v0.0.4 // indirect
 	github.com/gliderlabs/ssh v0.3.8 // indirect
 	github.com/go-co-op/gocron v1.37.0 // indirect
@@ -66,14 +66,14 @@ require (
 	github.com/metacubex/gvisor v0.0.0-20250324165734-5857f47bd43b // indirect
 	github.com/metacubex/quic-go v0.51.1-0.20250423035655-e3948b36ce14 // indirect
 	github.com/metacubex/randv2 v0.2.0 // indirect
-	github.com/metacubex/sing-quic v0.0.0-20250423042228-20af53d3de7e // indirect
-	github.com/metacubex/sing-shadowsocks v0.2.8 // indirect
-	github.com/metacubex/sing-shadowsocks2 v0.2.2 // indirect
-	github.com/metacubex/sing-tun v0.4.6-0.20250412144348-c426cb167db5 // indirect
-	github.com/metacubex/sing-vmess v0.1.14-0.20250228002636-abc39e113b82 // indirect
-	github.com/metacubex/sing-wireguard v0.0.0-20241126021510-0827d417b589 // indirect
+	github.com/metacubex/sing-quic v0.0.0-20250503063219-9663baa38af1 // indirect
+	github.com/metacubex/sing-shadowsocks v0.2.9 // indirect
+	github.com/metacubex/sing-shadowsocks2 v0.2.3 // indirect
+	github.com/metacubex/sing-tun v0.4.6-0.20250503065609-efb9f0beb6f6 // indirect
+	github.com/metacubex/sing-vmess v0.2.1 // indirect
+	github.com/metacubex/sing-wireguard v0.0.0-20250503063753-2dc62acc626f // indirect
 	github.com/metacubex/tfo-go v0.0.0-20241231083714-66613d49c422 // indirect
-	github.com/metacubex/utls v1.7.0-alpha.1 // indirect
+	github.com/metacubex/utls v1.7.0-alpha.2 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/mroth/weightedrand/v2 v2.1.0 // indirect
