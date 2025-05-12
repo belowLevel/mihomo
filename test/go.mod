@@ -64,9 +64,9 @@ require (
 	github.com/metacubex/chacha v0.1.2 // indirect
 	github.com/metacubex/gopacket v1.1.20-0.20230608035415-7e2f98a3e759 // indirect
 	github.com/metacubex/gvisor v0.0.0-20250324165734-5857f47bd43b // indirect
-	github.com/metacubex/quic-go v0.51.1-0.20250423035655-e3948b36ce14 // indirect
+	github.com/metacubex/quic-go v0.51.1-0.20250511032541-4e34341cf18b // indirect
 	github.com/metacubex/randv2 v0.2.0 // indirect
-	github.com/metacubex/sing-quic v0.0.0-20250503063219-9663baa38af1 // indirect
+	github.com/metacubex/sing-quic v0.0.0-20250511034158-b46e0e3e81b2 // indirect
 	github.com/metacubex/sing-shadowsocks v0.2.9 // indirect
 	github.com/metacubex/sing-shadowsocks2 v0.2.3 // indirect
 	github.com/metacubex/sing-tun v0.4.6-0.20250503065609-efb9f0beb6f6 // indirect
