@@ -304,9 +304,6 @@ func (cp *compatibleProvider) Update() error {
 }
 
 func (cp *compatibleProvider) Initial() error {
-	if cp.healthCheck.interval != 0 && cp.healthCheck.url != "" {
-		cp.HealthCheck()
-	}
 	return nil
 }
 
