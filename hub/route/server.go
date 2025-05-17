@@ -99,7 +99,7 @@ func SetUIPath(path string) {
 	uiPath = C.Path.Resolve(path)
 }
 
-func router(isDebug bool, secret string, dohServer string, cors Cors) *chi.Mux {
+func router(isDebug bool, secret string, dohServer string, cors Cors) http.Handler {
 	r := chi.NewRouter()
 	cors.Apply(r)
 	if isDebug {
@@ -152,7 +152,8 @@ func router(isDebug bool, secret string, dohServer string, cors Cors) *chi.Mux {
 		r.Mount(dohServer, dohRouter())
 	}
 
-	return r
+	// using h2c.NewHandler to ensure we can work in plain http2, and some tls conn is not *tls.Conn
+	return h2c.NewHandler(r, &http2.Server{})
 }
 
 func start(cfg *Config) {
@@ -215,8 +216,7 @@ func startTLS(cfg *Config) {
 			}
 		}
 		server := &http.Server{
-			// using h2c.NewHandler to ensure we can work in plain http2 and some tls conn is not *tls.Conn
-			Handler: h2c.NewHandler(router(cfg.IsDebug, cfg.Secret, cfg.DohServer, cfg.Cors), &http2.Server{}),
+			Handler: router(cfg.IsDebug, cfg.Secret, cfg.DohServer, cfg.Cors),
 		}
 		tlsServer = server
 		if err = server.Serve(tlsC.NewListener(l, tlsConfig)); err != nil {
