@@ -1,7 +1,6 @@
 package http
 
 import (
-	"crypto/tls"
 	"errors"
 	"github.com/mastercactapus/proxyprotocol"
 	"net"
@@ -9,6 +8,8 @@ import (
 
 	"github.com/metacubex/mihomo/adapter/inbound"
 	"github.com/metacubex/mihomo/component/ca"
+	"github.com/metacubex/mihomo/component/ech"
+	tlsC "github.com/metacubex/mihomo/component/tls"
 	C "github.com/metacubex/mihomo/constant"
 	authStore "github.com/metacubex/mihomo/listener/auth"
 	LC "github.com/metacubex/mihomo/listener/config"
@@ -67,7 +68,7 @@ func NewWithConfig(config LC.AuthServer, tunnel C.Tunnel, additions ...inbound.A
 	}
 	l = proxyprotocol.NewListener(l, time.Second*5)
 
-	tlsConfig := &tls.Config{}
+	tlsConfig := &tlsC.Config{}
 	var realityBuilder *reality.Builder
 
 	if config.Certificate != "" && config.PrivateKey != "" {
@@ -75,7 +76,14 @@ func NewWithConfig(config LC.AuthServer, tunnel C.Tunnel, additions ...inbound.A
 		if err != nil {
 			return nil, err
 		}
-		tlsConfig.Certificates = []tls.Certificate{cert}
+		tlsConfig.Certificates = []tlsC.Certificate{tlsC.UCertificate(cert)}
+
+		if config.EchKey != "" {
+			err = ech.LoadECHKey(config.EchKey, tlsConfig, C.Path)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 	if config.RealityConfig.PrivateKey != "" {
 		if tlsConfig.Certificates != nil {
@@ -90,7 +98,7 @@ func NewWithConfig(config LC.AuthServer, tunnel C.Tunnel, additions ...inbound.A
 	if realityBuilder != nil {
 		l = realityBuilder.NewListener(l)
 	} else if len(tlsConfig.Certificates) > 0 {
-		l = tls.NewListener(l, tlsConfig)
+		l = tlsC.NewListener(l, tlsConfig)
 	}
 
 	hl := &Listener{

@@ -181,7 +181,7 @@ func NewHysteria2(option Hysteria2Option) (*Hysteria2, error) {
 		ReceiveBPS:         StringToBps(option.Down),
 		SalamanderPassword: salamanderPassword,
 		Password:           option.Password,
-		TLSConfig:          tlsC.UConfig(tlsConfig),
+		TLSConfig:          tlsClientConfig,
 		QUICConfig:         quicConfig,
 		UDPDisabled:        false,
 		CWND:               option.CWND,
