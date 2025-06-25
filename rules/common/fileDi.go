@@ -18,7 +18,7 @@ func (f *FileDI) RuleType() C.RuleType {
 	return C.FileDI
 }
 
-func (f *FileDI) Match(metadata *C.Metadata) (bool, string) {
+func (f *FileDI) Match(metadata *C.Metadata, helper C.RuleMatchHelper) (bool, string) {
 	zoneset, ok := sets[f.payload]
 	if !ok {
 		return false, f.adapter

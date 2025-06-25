@@ -140,6 +140,7 @@ github.com/metacubex/chacha v0.1.0 h1:tg9RSJ18NvL38cCWNyYH1eiG6qDCyyXIaTLQthon0s
 github.com/metacubex/chacha v0.1.0/go.mod h1:Djn9bPZxLTXbJFSeyo0/qzEzQI+gUSSzttuzZM75GH8=
 github.com/metacubex/chacha v0.1.1/go.mod h1:Djn9bPZxLTXbJFSeyo0/qzEzQI+gUSSzttuzZM75GH8=
 github.com/metacubex/chacha v0.1.2/go.mod h1:Djn9bPZxLTXbJFSeyo0/qzEzQI+gUSSzttuzZM75GH8=
+github.com/metacubex/chacha v0.1.5/go.mod h1:Djn9bPZxLTXbJFSeyo0/qzEzQI+gUSSzttuzZM75GH8=
 github.com/metacubex/gopacket v1.1.20-0.20230608035415-7e2f98a3e759 h1:cjd4biTvOzK9ubNCCkQ+ldc4YSH/rILn53l/xGBFHHI=
 github.com/metacubex/gopacket v1.1.20-0.20230608035415-7e2f98a3e759/go.mod h1:UHOv2xu+RIgLwpXca7TLrXleEd4oR3sPatW6IF8wU88=
 github.com/metacubex/gvisor v0.0.0-20240320004321-933faba989ec h1:HxreOiFTUrJXJautEo8rnE1uKTVGY8wtZepY1Tii/Nc=
@@ -175,10 +176,12 @@ github.com/metacubex/sing-shadowsocks v0.2.8 h1:wIhlaigswzjPw4hej75sEvWte3QR0+AJ
 github.com/metacubex/sing-shadowsocks v0.2.8/go.mod h1:X3x88XtJpBxG0W0/ECOJL6Ib0SJ3xdniAkU/6/RMWU0=
 github.com/metacubex/sing-shadowsocks v0.2.9/go.mod h1:CJSEGO4FWQAWe+ZiLZxCweGdjRR60A61SIoVjdjQeBA=
 github.com/metacubex/sing-shadowsocks v0.2.10/go.mod h1:MtRM0ZZjR0kaDOzy9zWSt6/4/UlrnsNBq+1FNAF4vBk=
+github.com/metacubex/sing-shadowsocks v0.2.11-0.20250621023810-0e9ef9dd0c92/go.mod h1:/squZ38pXrYjqtg8qn+joVvwbpGNYQNp8yxKsMVbCto=
 github.com/metacubex/sing-shadowsocks2 v0.2.2 h1:eaf42uVx4Lr21S6MDYs0ZdTvGA0GEhDpb9no4+gdXPo=
 github.com/metacubex/sing-shadowsocks2 v0.2.2/go.mod h1:BhOug03a/RbI7y6hp6q+6ITM1dXjnLTmeWBHSTwvv2Q=
 github.com/metacubex/sing-shadowsocks2 v0.2.3/go.mod h1:/WNy/Q8ahLCoPRriWuFZFD0Jy+JNp1MEQl28Zw6SaF8=
 github.com/metacubex/sing-shadowsocks2 v0.2.4/go.mod h1:WP8+S0kqtnSbX1vlIpo5i8Irm/ijZITEPBcZ26B5unY=
+github.com/metacubex/sing-shadowsocks2 v0.2.5-0.20250621023950-93d605a2143d/go.mod h1:+ukTd0OPFglT3bnKAYTJWYPbuox6HYNXE235r5tHdUk=
 github.com/metacubex/sing-tun v0.2.7-0.20240729131039-ed03f557dee1 h1:ypfofGDZbP8p3Y4P/m74JYu7sQViesi3c8nbmT6cS0Y=
 github.com/metacubex/sing-tun v0.2.7-0.20240729131039-ed03f557dee1/go.mod h1:olbEx9yVcaw5tHTNlRamRoxmMKcvDvcVS1YLnQGzvWE=
 github.com/metacubex/sing-tun v0.2.7-0.20241021011113-857bcd6ee47c/go.mod h1:lCrP0AW7ieKnXG1JEeZLW+9h99QzjuOX0MfCQfz6TgE=
@@ -192,6 +195,7 @@ github.com/metacubex/sing-tun v0.4.6-0.20250408111348-d1d90a8d694b/go.mod h1:V0N
 github.com/metacubex/sing-tun v0.4.6-0.20250412144348-c426cb167db5/go.mod h1:V0N4rr0dWPBEE20ESkTXdbtx2riQYcb6YtwC5w/9wl0=
 github.com/metacubex/sing-tun v0.4.6-0.20250503065609-efb9f0beb6f6/go.mod h1:HDaHDL6onAX2ZGbAGUXKp++PohRdNb7Nzt6zxzhox+U=
 github.com/metacubex/sing-tun v0.4.6-0.20250524142129-9d110c0af70c/go.mod h1:HDaHDL6onAX2ZGbAGUXKp++PohRdNb7Nzt6zxzhox+U=
+github.com/metacubex/sing-tun v0.4.7-0.20250611091011-60774779fdd8/go.mod h1:2YywXPWW8Z97kTH7RffOeykKzU+l0aiKlglWV1PAS64=
 github.com/metacubex/sing-vmess v0.1.9-0.20240719134745-1df6fb20bbf9 h1:OAXiCosqY8xKDp3pqTW3qbrCprZ1l6WkrXSFSCwyY4I=
 github.com/metacubex/sing-vmess v0.1.9-0.20240719134745-1df6fb20bbf9/go.mod h1:olVkD4FChQ5gKMHG4ZzuD7+fMkJY1G8vwOKpRehjrmY=
 github.com/metacubex/sing-vmess v0.1.14-0.20250203033000-f61322b3dbe3/go.mod h1:nE7Mdzj/QUDwgRi/8BASPtsxtIFZTHA4Yst5GgwbGCQ=
@@ -219,6 +223,7 @@ github.com/metacubex/utls v1.6.8-alpha.5/go.mod h1:MEZ5WO/VLKYs/s/dOzEK/mlXOQxc0
 github.com/metacubex/utls v1.7.0-alpha.1/go.mod h1:oknYT0qTOwE4hjPmZOEpzVdefnW7bAdGLvZcqmk4TLU=
 github.com/metacubex/utls v1.7.0-alpha.2/go.mod h1:oknYT0qTOwE4hjPmZOEpzVdefnW7bAdGLvZcqmk4TLU=
 github.com/metacubex/utls v1.7.3/go.mod h1:oknYT0qTOwE4hjPmZOEpzVdefnW7bAdGLvZcqmk4TLU=
+github.com/metacubex/utls v1.7.4-0.20250610022031-808d767c8c73/go.mod h1:oknYT0qTOwE4hjPmZOEpzVdefnW7bAdGLvZcqmk4TLU=
 github.com/miekg/dns v1.1.61 h1:nLxbwF3XxhwVSm8g9Dghm9MHPaUZuqhPiGL+675ZmEs=
 github.com/miekg/dns v1.1.61/go.mod h1:mnAarhS3nWaW+NVP2wTkYVIZyHNJ098SJZUki3eykwQ=
 github.com/miekg/dns v1.1.62/go.mod h1:mvDlcItzm+br7MToIKqkglaGhlFMHJ9DTNNWONWXbNQ=

@@ -13,7 +13,7 @@ func (f *MustResolve) RuleType() C.RuleType {
 	return C.MustResolve
 }
 
-func (f *MustResolve) Match(metadata *C.Metadata) (bool, string) {
+func (f *MustResolve) Match(metadata *C.Metadata, helper C.RuleMatchHelper) (bool, string) {
 	if metadata.DstIP.IsUnspecified() {
 		return true, f.adapter
 	}

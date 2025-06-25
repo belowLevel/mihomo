@@ -14,7 +14,7 @@ func (g *ISOEmpty) RuleType() C.RuleType {
 	return C.ISOEmpty
 }
 
-func (g *ISOEmpty) Match(metadata *C.Metadata) (bool, string) {
+func (g *ISOEmpty) Match(metadata *C.Metadata, helper C.RuleMatchHelper) (bool, string) {
 	ip := metadata.DstIP
 	if !ip.IsValid() {
 		return false, g.adapter

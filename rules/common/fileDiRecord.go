@@ -41,7 +41,7 @@ func (f *FileDIRecord) RuleType() C.RuleType {
 	return C.RECORD
 }
 
-func (f *FileDIRecord) Match(metadata *C.Metadata) (bool, string) {
+func (f *FileDIRecord) Match(metadata *C.Metadata, helper C.RuleMatchHelper) (bool, string) {
 	host := metadata.Host
 	if host == "" {
 		return false, ""
