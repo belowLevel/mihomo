@@ -20,23 +20,23 @@ require (
 	github.com/metacubex/amneziawg-go v0.0.0-20240922133038-fdf3a4d5a4ab
 	github.com/metacubex/bart v0.20.5
 	github.com/metacubex/bbolt v0.0.0-20240822011022-aed6d4850399
-	github.com/metacubex/chacha v0.1.2
+	github.com/metacubex/chacha v0.1.5
 	github.com/metacubex/fswatch v0.1.1
 	github.com/metacubex/gopacket v1.1.20-0.20230608035415-7e2f98a3e759
 	github.com/metacubex/quic-go v0.52.1-0.20250522021943-aef454b9e639
 	github.com/metacubex/randv2 v0.2.0
-	github.com/metacubex/sing v0.5.3
+	github.com/metacubex/sing v0.5.4-0.20250605054047-54dc6097da29
 	github.com/metacubex/sing-mux v0.3.2
 	github.com/metacubex/sing-quic v0.0.0-20250523120938-f1a248e5ec7f
-	github.com/metacubex/sing-shadowsocks v0.2.10
-	github.com/metacubex/sing-shadowsocks2 v0.2.4
+	github.com/metacubex/sing-shadowsocks v0.2.11-0.20250621023810-0e9ef9dd0c92
+	github.com/metacubex/sing-shadowsocks2 v0.2.5-0.20250621023950-93d605a2143d
 	github.com/metacubex/sing-shadowtls v0.0.0-20250503063515-5d9f966d17a2
-	github.com/metacubex/sing-tun v0.4.6-0.20250524142129-9d110c0af70c
+	github.com/metacubex/sing-tun v0.4.7-0.20250611091011-60774779fdd8
 	github.com/metacubex/sing-vmess v0.2.2
 	github.com/metacubex/sing-wireguard v0.0.0-20250503063753-2dc62acc626f
 	github.com/metacubex/smux v0.0.0-20250503055512-501391591dee
 	github.com/metacubex/tfo-go v0.0.0-20250516165257-e29c16ae41d4
-	github.com/metacubex/utls v1.7.3
+	github.com/metacubex/utls v1.7.4-0.20250610022031-808d767c8c73
 	github.com/metacubex/wireguard-go v0.0.0-20240922131502-c182e7471181
 	github.com/miekg/dns v1.1.63 // lastest version compatible with golang1.20
 	github.com/mroth/weightedrand/v2 v2.1.0
