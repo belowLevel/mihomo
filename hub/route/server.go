@@ -304,7 +304,7 @@ func startPipe(cfg *Config) {
 	}
 }
 
-func safeEuqal(a, b string) bool {
+func safeEqual(a, b string) bool {
 	aBuf := utils.ImmutableBytesFromString(a)
 	bBuf := utils.ImmutableBytesFromString(b)
 	return subtle.ConstantTimeCompare(aBuf, bBuf) == 1
@@ -316,7 +316,7 @@ func authentication(secret string) func(http.Handler) http.Handler {
 			// Browser websocket not support custom header
 			if r.Header.Get("Upgrade") == "websocket" && r.URL.Query().Get("token") != "" {
 				token := r.URL.Query().Get("token")
-				if !safeEuqal(token, secret) {
+				if !safeEqual(token, secret) {
 					render.Status(r, http.StatusUnauthorized)
 					render.JSON(w, r, ErrUnauthorized)
 					return
@@ -329,7 +329,7 @@ func authentication(secret string) func(http.Handler) http.Handler {
 			bearer, token, found := strings.Cut(header, " ")
 
 			hasInvalidHeader := bearer != "Bearer"
-			hasInvalidSecret := !found || !safeEuqal(token, secret)
+			hasInvalidSecret := !found || !safeEqual(token, secret)
 			if hasInvalidHeader || hasInvalidSecret {
 				render.Status(r, http.StatusUnauthorized)
 				render.JSON(w, r, ErrUnauthorized)
