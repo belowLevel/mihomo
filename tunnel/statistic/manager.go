@@ -2,12 +2,12 @@ package statistic
 
 import (
 	"encoding/json"
-	"github.com/puzpuzpuz/xsync/v3"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/metacubex/mihomo/common/atomic"
+	"github.com/metacubex/mihomo/common/xsync"
 	"github.com/metacubex/mihomo/log"
 	"github.com/shirou/gopsutil/v4/process"
 )
@@ -17,8 +17,8 @@ var ChannelManager map[string]*Manager
 var ChannelMutex sync.Mutex
 
 func init() {
-	ChannelManager = make(map[string]*Manager)
 
+	ChannelManager = make(map[string]*Manager)
 	Processor = &process.Process{Pid: int32(os.Getpid())}
 
 	go func() {
@@ -34,7 +34,7 @@ func init() {
 }
 
 type Manager struct {
-	connections   *xsync.MapOf[string, Tracker]
+	connections   xsync.Map[string, Tracker]
 	uploadTemp    atomic.Int64
 	downloadTemp  atomic.Int64
 	uploadBlip    atomic.Int64
@@ -45,7 +45,7 @@ type Manager struct {
 
 func NewManager(channelname string) *Manager {
 	manager := &Manager{
-		connections:   xsync.NewMapOf[string, Tracker](),
+		//connections:   xsync.NewMapOf[string, Tracker](),
 		uploadTemp:    atomic.NewInt64(0),
 		downloadTemp:  atomic.NewInt64(0),
 		uploadBlip:    atomic.NewInt64(0),

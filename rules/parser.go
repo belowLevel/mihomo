@@ -10,6 +10,10 @@ import (
 )
 
 func ParseRule(tp, payload, target string, params []string, subRules map[string][]C.Rule) (parsed C.Rule, parseErr error) {
+	if tp != "MATCH" && payload == "" { // only MATCH allowed doesn't contain payload
+		return nil, fmt.Errorf("missing subsequent parameters: %s", tp)
+	}
+
 	switch tp {
 	case "DOMAIN":
 		parsed = RC.NewDomain(payload, target)
