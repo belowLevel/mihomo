@@ -3,6 +3,7 @@ package outbound
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -19,6 +20,7 @@ import (
 	C "github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/transport/gun"
 	"github.com/metacubex/mihomo/transport/vless"
+	"github.com/metacubex/mihomo/transport/vless/encryption"
 	"github.com/metacubex/mihomo/transport/vmess"
 
 	vmessSing "github.com/metacubex/sing-vmess"
@@ -30,6 +32,8 @@ type Vless struct {
 	*Base
 	client *vless.Client
 	option *VlessOption
+
+	encryption *encryption.ClientInstance
 
 	// for gun mux
 	gunTLSConfig *tls.Config
@@ -53,6 +57,7 @@ type VlessOption struct {
 	PacketAddr        bool              `proxy:"packet-addr,omitempty"`
 	XUDP              bool              `proxy:"xudp,omitempty"`
 	PacketEncoding    string            `proxy:"packet-encoding,omitempty"`
+	Encryption        string            `proxy:"encryption,omitempty"`
 	Network           string            `proxy:"network,omitempty"`
 	ECHOpts           ECHOptions        `proxy:"ech-opts,omitempty"`
 	RealityOpts       RealityOptions    `proxy:"reality-opts,omitempty"`
@@ -163,6 +168,12 @@ func (v *Vless) streamConnContext(ctx context.Context, c net.Conn, metadata *C.M
 	if ctx.Done() != nil {
 		done := N.SetupContextForConn(ctx, c)
 		defer done(&err)
+	}
+	if v.encryption != nil {
+		c, err = v.encryption.Handshake(c)
+		if err != nil {
+			return
+		}
 	}
 	if metadata.NetWork == C.UDP {
 		if v.option.PacketAddr {
@@ -440,6 +451,16 @@ func NewVless(option VlessOption) (*Vless, error) {
 		},
 		client: client,
 		option: &option,
+	}
+
+	v.encryption, err = encryption.NewClient(option.Encryption)
+	if err != nil {
+		return nil, err
+	}
+	if v.encryption != nil {
+		if option.Flow != "" {
+			return nil, errors.New(`vless "encryption" doesn't support "flow" yet`)
+		}
 	}
 
 	v.realityConfig, err = v.option.RealityOpts.Parse()

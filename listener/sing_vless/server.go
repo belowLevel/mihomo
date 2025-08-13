@@ -19,6 +19,7 @@ import (
 	"github.com/metacubex/mihomo/listener/sing"
 	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/mihomo/transport/gun"
+	"github.com/metacubex/mihomo/transport/vless/encryption"
 	mihomoVMess "github.com/metacubex/mihomo/transport/vmess"
 
 	"github.com/metacubex/sing-vmess/vless"
@@ -45,10 +46,11 @@ func init() {
 }
 
 type Listener struct {
-	closed    bool
-	config    LC.VlessServer
-	listeners []net.Listener
-	service   *vless.Service[string]
+	closed     bool
+	config     LC.VlessServer
+	listeners  []net.Listener
+	service    *vless.Service[string]
+	decryption *encryption.ServerInstance
 }
 
 func New(config LC.VlessServer, tunnel C.Tunnel, additions ...inbound.Addition) (sl *Listener, err error) {
@@ -80,7 +82,20 @@ func New(config LC.VlessServer, tunnel C.Tunnel, additions ...inbound.Addition) 
 			return it.Flow
 		}))
 
-	sl = &Listener{false, config, nil, service}
+	sl = &Listener{config: config, service: service}
+
+	sl.decryption, err = encryption.NewServer(config.Decryption)
+	if err != nil {
+		return nil, err
+	}
+	if sl.decryption != nil {
+		defer func() { // decryption must be closed to avoid the goroutine leak
+			if err != nil {
+				_ = sl.decryption.Close()
+				sl.decryption = nil
+			}
+		}()
+	}
 
 	tlsConfig := &tlsC.Config{}
 	var realityBuilder *reality.Builder
@@ -149,8 +164,8 @@ func New(config LC.VlessServer, tunnel C.Tunnel, additions ...inbound.Addition) 
 			} else {
 				l = tlsC.NewListener(l, tlsConfig)
 			}
-		} else {
-			return nil, errors.New("disallow using Vless without both certificates/reality config")
+		} else if sl.decryption == nil {
+			return nil, errors.New("disallow using Vless without any certificates/reality/decryption config")
 		}
 		sl.listeners = append(sl.listeners, l)
 
@@ -185,6 +200,9 @@ func (l *Listener) Close() error {
 			retErr = err
 		}
 	}
+	if l.decryption != nil {
+		_ = l.decryption.Close()
+	}
 	return retErr
 }
 
@@ -201,6 +219,13 @@ func (l *Listener) AddrList() (addrList []net.Addr) {
 
 func (l *Listener) HandleConn(conn net.Conn, tunnel C.Tunnel, additions ...inbound.Addition) {
 	ctx := sing.WithAdditions(context.TODO(), additions...)
+	if l.decryption != nil {
+		var err error
+		conn, err = l.decryption.Handshake(conn)
+		if err != nil {
+			return
+		}
+	}
 	err := l.service.NewConnection(ctx, conn, metadata.Metadata{
 		Protocol: "vless",
 		Source:   metadata.SocksaddrFromNet(conn.RemoteAddr()),

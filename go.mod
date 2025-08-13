@@ -27,7 +27,7 @@ require (
 	github.com/metacubex/quic-go v0.54.1-0.20250730114134-a1ae705fe295
 	github.com/metacubex/randv2 v0.2.0
 	github.com/metacubex/sing v0.5.4
-	github.com/metacubex/sing-mux v0.3.2
+	github.com/metacubex/sing-mux v0.3.3-0.20250813083925-d7c9aeaeeaac
 	github.com/metacubex/sing-quic v0.0.0-20250718154553-1b193bec4cbb
 	github.com/metacubex/sing-shadowsocks v0.2.11
 	github.com/metacubex/sing-shadowsocks2 v0.2.5
@@ -37,7 +37,7 @@ require (
 	github.com/metacubex/sing-wireguard v0.0.0-20250503063753-2dc62acc626f
 	github.com/metacubex/smux v0.0.0-20250503055512-501391591dee
 	github.com/metacubex/tfo-go v0.0.0-20250516165257-e29c16ae41d4
-	github.com/metacubex/utls v1.8.0
+	github.com/metacubex/utls v1.8.1-0.20250811145843-49b4f106169a
 	github.com/metacubex/wireguard-go v0.0.0-20240922131502-c182e7471181
 	github.com/miekg/dns v1.1.63 // lastest version compatible with golang1.20
 	github.com/mroth/weightedrand/v2 v2.1.0
