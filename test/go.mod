@@ -67,13 +67,13 @@ require (
 	github.com/metacubex/quic-go v0.54.1-0.20250730114134-a1ae705fe295 // indirect
 	github.com/metacubex/randv2 v0.2.0 // indirect
 	github.com/metacubex/sing-quic v0.0.0-20250718154553-1b193bec4cbb // indirect
-	github.com/metacubex/sing-shadowsocks v0.2.11 // indirect
-	github.com/metacubex/sing-shadowsocks2 v0.2.5 // indirect
-	github.com/metacubex/sing-tun v0.4.7-0.20250801130030-308b828865ae // indirect
-	github.com/metacubex/sing-vmess v0.2.4-0.20250731011226-ea28d589924d // indirect
+	github.com/metacubex/sing-shadowsocks v0.2.12 // indirect
+	github.com/metacubex/sing-shadowsocks2 v0.2.6 // indirect
+	github.com/metacubex/sing-tun v0.4.7 // indirect
+	github.com/metacubex/sing-vmess v0.2.4-0.20250817075824-5e05f123ccdd // indirect
 	github.com/metacubex/sing-wireguard v0.0.0-20250503063753-2dc62acc626f // indirect
 	github.com/metacubex/tfo-go v0.0.0-20250516165257-e29c16ae41d4 // indirect
-	github.com/metacubex/utls v1.8.0 // indirect
+	github.com/metacubex/utls v1.8.1-0.20250811145843-49b4f106169a // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/mroth/weightedrand/v2 v2.1.0 // indirect

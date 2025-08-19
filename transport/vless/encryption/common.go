@@ -5,7 +5,6 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"crypto/sha256"
 	"fmt"
 	"io"
 	"math/big"
@@ -13,6 +12,7 @@ import (
 
 	"golang.org/x/crypto/chacha20poly1305"
 	"golang.org/x/crypto/hkdf"
+	"golang.org/x/crypto/sha3"
 )
 
 var MaxNonce = bytes.Repeat([]byte{255}, 12)
@@ -45,10 +45,10 @@ func DecodeHeader(h []byte) (t byte, l int, err error) {
 	} else if h[0] == 1 && h[1] == 1 && h[2] == 1 {
 		t = 1
 	} else {
-		h = nil
+		l = 0
 	}
-	if h == nil || l < 17 || l > 17000 { // TODO: TLSv1.3 max length
-		err = fmt.Errorf("invalid header: %v", h[:5])
+	if l < 17 || l > 17000 { // TODO: TLSv1.3 max length
+		err = fmt.Errorf("invalid header: %v", h[:5]) // DO NOT CHANGE: relied by client's Read()
 	}
 	return
 }
@@ -62,9 +62,20 @@ func ReadAndDecodeHeader(conn net.Conn) (h []byte, t byte, l int, err error) {
 	return
 }
 
+func ReadAndDiscardPaddings(conn net.Conn) (h []byte, t byte, l int, err error) {
+	for {
+		if h, t, l, err = ReadAndDecodeHeader(conn); err != nil || t != 23 {
+			return
+		}
+		if _, err = io.ReadFull(conn, make([]byte, l)); err != nil {
+			return
+		}
+	}
+}
+
 func NewAead(c byte, secret, salt, info []byte) (aead cipher.AEAD) {
 	key := make([]byte, 32)
-	hkdf.New(sha256.New, secret, salt, info).Read(key)
+	hkdf.New(sha3.New256, secret, salt, info).Read(key)
 	if c&1 == 1 {
 		block, _ := aes.NewCipher(key)
 		aead, _ = cipher.NewGCM(block)
