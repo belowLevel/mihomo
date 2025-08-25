@@ -73,7 +73,7 @@ require (
 	github.com/metacubex/sing-vmess v0.2.4-0.20250822020810-4856053566f0 // indirect
 	github.com/metacubex/sing-wireguard v0.0.0-20250503063753-2dc62acc626f // indirect
 	github.com/metacubex/tfo-go v0.0.0-20250516165257-e29c16ae41d4 // indirect
-	github.com/metacubex/utls v1.8.1-0.20250811145843-49b4f106169a // indirect
+	github.com/metacubex/utls v1.8.1-0.20250823120917-12f5ba126142 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/mroth/weightedrand/v2 v2.1.0 // indirect

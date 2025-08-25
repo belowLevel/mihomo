@@ -244,6 +244,7 @@ github.com/metacubex/utls v1.7.4-0.20250610022031-808d767c8c73/go.mod h1:oknYT0q
 github.com/metacubex/utls v1.7.4-0.20250628044047-8d330f8b93bf/go.mod h1:FdjYzVfCtgtna19hX0ER1Xsa5uJInwdQ4IcaaI98lEQ=
 github.com/metacubex/utls v1.8.0/go.mod h1:FdjYzVfCtgtna19hX0ER1Xsa5uJInwdQ4IcaaI98lEQ=
 github.com/metacubex/utls v1.8.1-0.20250811145843-49b4f106169a/go.mod h1:FdjYzVfCtgtna19hX0ER1Xsa5uJInwdQ4IcaaI98lEQ=
+github.com/metacubex/utls v1.8.1-0.20250823120917-12f5ba126142/go.mod h1:67I3skhEY4Sya8f1YxELwWPoeQdXqZCrWNYLvq8gn2U=
 github.com/miekg/dns v1.1.61 h1:nLxbwF3XxhwVSm8g9Dghm9MHPaUZuqhPiGL+675ZmEs=
 github.com/miekg/dns v1.1.61/go.mod h1:mnAarhS3nWaW+NVP2wTkYVIZyHNJ098SJZUki3eykwQ=
 github.com/miekg/dns v1.1.62/go.mod h1:mvDlcItzm+br7MToIKqkglaGhlFMHJ9DTNNWONWXbNQ=
