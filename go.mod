@@ -1,15 +1,13 @@
 module github.com/metacubex/mihomo
 
-go 1.23
-
-toolchain go1.24.5
+go 1.24
 
 require (
 	github.com/bahlo/generic-list-go v0.2.0
 	github.com/coreos/go-iptables v0.8.0
 	github.com/dlclark/regexp2 v1.11.5
-	github.com/enfein/mieru/v3 v3.19.0
-	github.com/go-chi/chi/v5 v5.2.2
+	github.com/enfein/mieru/v3 v3.19.1
+	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-chi/render v1.0.3
 	github.com/gobwas/ws v1.4.0
 	github.com/gofrs/uuid/v5 v5.3.2
@@ -26,17 +24,17 @@ require (
 	github.com/metacubex/quic-go v0.54.1-0.20250730114134-a1ae705fe295
 	github.com/metacubex/randv2 v0.2.0
 	github.com/metacubex/restls-client-go v0.1.7
-	github.com/metacubex/sing v0.5.5
+	github.com/metacubex/sing v0.5.6-0.20250826072929-f69b475e017b
 	github.com/metacubex/sing-mux v0.3.3-0.20250813083925-d7c9aeaeeaac
 	github.com/metacubex/sing-quic v0.0.0-20250718154553-1b193bec4cbb
 	github.com/metacubex/sing-shadowsocks v0.2.12
 	github.com/metacubex/sing-shadowsocks2 v0.2.6
 	github.com/metacubex/sing-shadowtls v0.0.0-20250503063515-5d9f966d17a2
-	github.com/metacubex/sing-tun v0.4.7
+	github.com/metacubex/sing-tun v0.4.8-0.20250827085914-fc5681b9fc9f
 	github.com/metacubex/sing-vmess v0.2.4-0.20250822020810-4856053566f0
 	github.com/metacubex/sing-wireguard v0.0.0-20250503063753-2dc62acc626f
 	github.com/metacubex/smux v0.0.0-20250503055512-501391591dee
-	github.com/metacubex/tfo-go v0.0.0-20250516165257-e29c16ae41d4
+	github.com/metacubex/tfo-go v0.0.0-20250827083229-aa432b865617
 	github.com/metacubex/utls v1.8.1-0.20250823120917-12f5ba126142
 	github.com/metacubex/wireguard-go v0.0.0-20250820062549-a6cecdd7f57f
 	github.com/miekg/dns v1.1.63 // lastest version compatible with golang1.20
@@ -46,17 +44,18 @@ require (
 	github.com/sagernet/cors v1.2.1
 	github.com/sagernet/netlink v0.0.0-20240612041022-b9a21c07ac6a
 	github.com/samber/lo v1.51.0
+	github.com/shirou/gopsutil/v4 v4.25.1 // lastest version compatible with golang1.20
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.0
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 	github.com/wk8/go-ordered-map/v2 v2.1.8
 	gitlab.com/go-extension/aes-ccm v0.0.0-20230221065045-e58665ef23c7
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
-	golang.org/x/crypto v0.33.0 // lastest version compatible with golang1.20
+	golang.org/x/crypto v0.37.0 // lastest version compatible with golang1.20
 	golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e // lastest version compatible with golang1.20
-	golang.org/x/net v0.35.0 // lastest version compatible with golang1.20
-	golang.org/x/sync v0.11.0 // lastest version compatible with golang1.20
-	golang.org/x/sys v0.30.0 // lastest version compatible with golang1.20
+	golang.org/x/net v0.39.0 // lastest version compatible with golang1.20
+	golang.org/x/sync v0.13.0 // lastest version compatible with golang1.20
+	golang.org/x/sys v0.34.0 // lastest version compatible with golang1.20
 	google.golang.org/protobuf v1.34.2 // lastest version compatible with golang1.20
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -64,10 +63,9 @@ require (
 require (
 	github.com/gliderlabs/ssh v0.3.8
 	github.com/go-co-op/gocron v1.37.0
-	github.com/kardianos/service v1.2.2
+	github.com/kardianos/service v1.2.4
 	github.com/mastercactapus/proxyprotocol v0.0.4
-	github.com/pires/go-proxyproto v0.8.0
-	github.com/shirou/gopsutil/v4 v4.25.6
+	github.com/pires/go-proxyproto v0.8.1
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
@@ -91,7 +89,7 @@ require (
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/google/btree v1.1.3 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
 	github.com/google/uuid v1.4.0 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
@@ -100,8 +98,8 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mdlayher/socket v0.4.1 // indirect
 	github.com/metacubex/ascon v0.1.0 // indirect
-	github.com/metacubex/gvisor v0.0.0-20250324165734-5857f47bd43b // indirect
-	github.com/metacubex/nftables v0.0.0-20250708020511-be959b9e8902 // indirect
+	github.com/metacubex/gvisor v0.0.0-20250826025146-23043f716a2c // indirect
+	github.com/metacubex/nftables v0.0.0-20250503052935-30a69ab87793 // indirect
 	github.com/oasisprotocol/deoxysii v0.0.0-20220228165953-2091330c22b7 // indirect
 	github.com/onsi/ginkgo/v2 v2.9.5 // indirect
 	github.com/pierrec/lz4/v4 v4.1.14 // indirect
@@ -122,7 +120,7 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/mock v0.4.0 // indirect
 	golang.org/x/mod v0.20.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
+	golang.org/x/text v0.24.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect
 )
