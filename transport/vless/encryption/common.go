@@ -22,15 +22,14 @@ type CommonConn struct {
 	PreWrite    []byte
 	GCM         *GCM
 	PeerPadding []byte
-	PeerInBytes []byte
+	rawInput    bytes.Buffer // PeerInBytes
 	PeerGCM     *GCM
 	input       bytes.Reader // PeerCache
 }
 
 func NewCommonConn(conn net.Conn) *CommonConn {
 	return &CommonConn{
-		Conn:        conn,
-		PeerInBytes: make([]byte, 5+17000), // no need to use sync.Pool, because we are always reading
+		Conn: conn,
 	}
 }
 
@@ -93,11 +92,12 @@ func (c *CommonConn) Read(b []byte) (int, error) {
 	if c.input.Len() > 0 {
 		return c.input.Read(b)
 	}
-	peerHeader := c.PeerInBytes[:5]
+	c.rawInput.Grow(5)
+	peerHeader := c.rawInput.Bytes()[:5]
 	if _, err := io.ReadFull(c.Conn, peerHeader); err != nil {
 		return 0, err
 	}
-	l, err := DecodeHeader(c.PeerInBytes[:5]) // l: 17~17000
+	l, err := DecodeHeader(peerHeader) // l: 17~17000
 	if err != nil {
 		if c.Client != nil && errors.Is(err, ErrInvalidHeader) { // client's 0-RTT
 			c.Client.RWLock.Lock()
@@ -110,7 +110,8 @@ func (c *CommonConn) Read(b []byte) (int, error) {
 		return 0, err
 	}
 	c.Client = nil
-	peerData := c.PeerInBytes[5 : 5+l]
+	c.rawInput.Grow(5 + l)
+	peerData := c.rawInput.Bytes()[5 : 5+l]
 	if _, err := io.ReadFull(c.Conn, peerData); err != nil {
 		return 0, err
 	}
@@ -120,7 +121,7 @@ func (c *CommonConn) Read(b []byte) (int, error) {
 	}
 	var newGCM *GCM
 	if bytes.Equal(c.PeerGCM.Nonce[:], MaxNonce) {
-		newGCM = NewGCM(c.PeerInBytes[:5+l], c.UnitedKey)
+		newGCM = NewGCM(c.rawInput.Bytes()[:5+l], c.UnitedKey)
 	}
 	_, err = c.PeerGCM.Open(dst[:0], nil, peerData, peerHeader)
 	if newGCM != nil {
