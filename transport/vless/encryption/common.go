@@ -6,22 +6,14 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"errors"
-	"fmt"
 	"io"
 	"math/big"
 	"net"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/metacubex/blake3"
+	"github.com/metacubex/mihomo/common/pool"
 )
-
-var OutBytesPool = sync.Pool{
-	New: func() any {
-		return make([]byte, 5+8192+16)
-	},
-}
 
 type CommonConn struct {
 	net.Conn
@@ -46,8 +38,8 @@ func (c *CommonConn) Write(b []byte) (int, error) {
 	if len(b) == 0 {
 		return 0, nil
 	}
-	outBytes := OutBytesPool.Get().([]byte)
-	defer OutBytesPool.Put(outBytes)
+	outBytes := pool.Get(5 + 8192 + 16)
+	defer pool.Put(outBytes)
 	for n := 0; n < len(b); {
 		b := b[n:]
 		if len(b) > 8192 {
@@ -107,7 +99,7 @@ func (c *CommonConn) Read(b []byte) (int, error) {
 	}
 	l, err := DecodeHeader(c.PeerInBytes[:5]) // l: 17~17000
 	if err != nil {
-		if c.Client != nil && strings.Contains(err.Error(), "invalid header: ") { // client's 0-RTT
+		if c.Client != nil && errors.Is(err, ErrInvalidHeader) { // client's 0-RTT
 			c.Client.RWLock.Lock()
 			if bytes.HasPrefix(c.UnitedKey, c.Client.PfsKey) {
 				c.Client.Expire = time.Now() // expired
@@ -200,13 +192,15 @@ func EncodeHeader(h []byte, l int) {
 	h[4] = byte(l)
 }
 
+var ErrInvalidHeader = errors.New("invalid header")
+
 func DecodeHeader(h []byte) (l int, err error) {
 	l = int(h[3])<<8 | int(h[4])
 	if h[0] != 23 || h[1] != 3 || h[2] != 3 {
 		l = 0
 	}
 	if l < 17 || l > 17000 { // TODO: TLSv1.3 max length
-		err = fmt.Errorf("invalid header: %v", h[:5]) // DO NOT CHANGE: relied by client's Read()
+		err = ErrInvalidHeader // DO NOT CHANGE: relied by client's Read()
 	}
 	return
 }
