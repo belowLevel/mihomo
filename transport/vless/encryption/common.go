@@ -4,15 +4,15 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
 	"errors"
 	"io"
-	"math/big"
 	"net"
 	"time"
 
-	"github.com/metacubex/blake3"
 	"github.com/metacubex/mihomo/common/pool"
+
+	"github.com/metacubex/blake3"
+	"github.com/metacubex/randv2"
 )
 
 type CommonConn struct {
@@ -209,6 +209,5 @@ func randBetween(from int64, to int64) int64 {
 	if from == to {
 		return from
 	}
-	bigInt, _ := rand.Int(rand.Reader, big.NewInt(to-from))
-	return from + bigInt.Int64()
+	return from + randv2.Int64N(to-from)
 }
