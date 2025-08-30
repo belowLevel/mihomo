@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"time"
@@ -92,8 +93,7 @@ func (c *CommonConn) Read(b []byte) (int, error) {
 	if c.input.Len() > 0 {
 		return c.input.Read(b)
 	}
-	c.rawInput.Grow(5)
-	peerHeader := c.rawInput.Bytes()[:5]
+	peerHeader := make([]byte, 5)
 	if _, err := io.ReadFull(c.Conn, peerHeader); err != nil {
 		return 0, err
 	}
@@ -110,8 +110,8 @@ func (c *CommonConn) Read(b []byte) (int, error) {
 		return 0, err
 	}
 	c.Client = nil
-	c.rawInput.Grow(5 + l)
-	peerData := c.rawInput.Bytes()[5 : 5+l]
+	c.rawInput.Grow(l)
+	peerData := c.rawInput.Bytes()[:l]
 	if _, err := io.ReadFull(c.Conn, peerData); err != nil {
 		return 0, err
 	}
@@ -121,7 +121,7 @@ func (c *CommonConn) Read(b []byte) (int, error) {
 	}
 	var newGCM *GCM
 	if bytes.Equal(c.PeerGCM.Nonce[:], MaxNonce) {
-		newGCM = NewGCM(c.rawInput.Bytes()[:5+l], c.UnitedKey)
+		newGCM = NewGCM(append(peerHeader, peerData...), c.UnitedKey)
 	}
 	_, err = c.PeerGCM.Open(dst[:0], nil, peerData, peerHeader)
 	if newGCM != nil {
@@ -201,7 +201,7 @@ func DecodeHeader(h []byte) (l int, err error) {
 		l = 0
 	}
 	if l < 17 || l > 17000 { // TODO: TLSv1.3 max length
-		err = ErrInvalidHeader // DO NOT CHANGE: relied by client's Read()
+		err = fmt.Errorf("%w: %v", ErrInvalidHeader, h[:5]) // DO NOT CHANGE: relied by client's Read()
 	}
 	return
 }
