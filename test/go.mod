@@ -9,7 +9,7 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/metacubex/mihomo v0.0.0
 	github.com/miekg/dns v1.1.63
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 	golang.org/x/net v0.39.0
 )
 
@@ -63,17 +63,17 @@ require (
 	github.com/mdlayher/socket v0.5.1 // indirect
 	github.com/metacubex/chacha v0.1.5 // indirect
 	github.com/metacubex/gopacket v1.1.20-0.20230608035415-7e2f98a3e759 // indirect
-	github.com/metacubex/gvisor v0.0.0-20250826025146-23043f716a2c // indirect
+	github.com/metacubex/gvisor v0.0.0-20250910065513-46d8fd52f27b // indirect
 	github.com/metacubex/quic-go v0.54.1-0.20250730114134-a1ae705fe295 // indirect
 	github.com/metacubex/randv2 v0.2.0 // indirect
-	github.com/metacubex/sing-quic v0.0.0-20250718154553-1b193bec4cbb // indirect
+	github.com/metacubex/sing-quic v0.0.0-20250909002258-06122df8f231 // indirect
 	github.com/metacubex/sing-shadowsocks v0.2.12 // indirect
-	github.com/metacubex/sing-shadowsocks2 v0.2.6 // indirect
-	github.com/metacubex/sing-tun v0.4.8-0.20250827085914-fc5681b9fc9f // indirect
-	github.com/metacubex/sing-vmess v0.2.4-0.20250829012208-7981a8548c79 // indirect
+	github.com/metacubex/sing-shadowsocks2 v0.2.7 // indirect
+	github.com/metacubex/sing-tun v0.4.8-0.20250912172659-89eba941fb22 // indirect
+	github.com/metacubex/sing-vmess v0.2.4-0.20250908094854-bc8e2a88b115 // indirect
 	github.com/metacubex/sing-wireguard v0.0.0-20250503063753-2dc62acc626f // indirect
 	github.com/metacubex/tfo-go v0.0.0-20250827083229-aa432b865617 // indirect
-	github.com/metacubex/utls v1.8.1-0.20250823120917-12f5ba126142 // indirect
+	github.com/metacubex/utls v1.8.1-0.20250916021850-3fcad0728a32 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/mroth/weightedrand/v2 v2.1.0 // indirect

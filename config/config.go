@@ -119,7 +119,6 @@ type Cors struct {
 
 // Experimental config
 type Experimental struct {
-	Fingerprints     []string
 	QUICGoDisableGSO bool
 	QUICGoDisableECN bool
 	IP4PEnable       bool
@@ -296,6 +295,7 @@ type RawTun struct {
 	ExcludePackage         []string       `yaml:"exclude-package" json:"exclude-package,omitempty"`
 	EndpointIndependentNat bool           `yaml:"endpoint-independent-nat" json:"endpoint-independent-nat,omitempty"`
 	UDPTimeout             int64          `yaml:"udp-timeout" json:"udp-timeout,omitempty"`
+	DisableICMPForwarding  bool           `yaml:"disable-icmp-forwarding" json:"disable-icmp-forwarding,omitempty"`
 	FileDescriptor         int            `yaml:"file-descriptor" json:"file-descriptor"`
 
 	Inet4RouteAddress        []netip.Prefix `yaml:"inet4-route-address" json:"inet4-route-address,omitempty"`
@@ -816,7 +816,6 @@ func parseController(cfg *RawConfig) (*Controller, error) {
 
 func parseExperimental(cfg *RawConfig) (*Experimental, error) {
 	return &Experimental{
-		Fingerprints:     cfg.Experimental.Fingerprints,
 		QUICGoDisableGSO: cfg.Experimental.QUICGoDisableGSO,
 		QUICGoDisableECN: cfg.Experimental.QUICGoDisableECN,
 		IP4PEnable:       cfg.Experimental.IP4PEnable,
@@ -1578,6 +1577,7 @@ func parseTun(rawTun RawTun, general *General) error {
 		ExcludePackage:         rawTun.ExcludePackage,
 		EndpointIndependentNat: rawTun.EndpointIndependentNat,
 		UDPTimeout:             rawTun.UDPTimeout,
+		DisableICMPForwarding:  rawTun.DisableICMPForwarding,
 		FileDescriptor:         rawTun.FileDescriptor,
 
 		Inet4RouteAddress:        rawTun.Inet4RouteAddress,
