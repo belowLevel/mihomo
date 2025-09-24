@@ -17,7 +17,6 @@ var ChannelManager map[string]*Manager
 var ChannelMutex sync.Mutex
 
 func init() {
-
 	ChannelManager = make(map[string]*Manager)
 	Processor = &process.Process{Pid: int32(os.Getpid())}
 
