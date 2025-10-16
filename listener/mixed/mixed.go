@@ -2,6 +2,7 @@ package mixed
 
 import (
 	"errors"
+	"github.com/pires/go-proxyproto"
 	"net"
 
 	"github.com/metacubex/mihomo/adapter/inbound"
@@ -61,6 +62,8 @@ func NewWithConfig(config LC.AuthServer, tunnel C.Tunnel, additions ...inbound.A
 	if err != nil {
 		return nil, err
 	}
+
+	l = &proxyproto.Listener{Listener: l}
 
 	tlsConfig := &tlsC.Config{Time: ntp.Now}
 	var realityBuilder *reality.Builder

@@ -2,10 +2,6 @@ package http
 
 import (
 	"errors"
-	"github.com/mastercactapus/proxyprotocol"
-	"net"
-	"time"
-
 	"github.com/metacubex/mihomo/adapter/inbound"
 	"github.com/metacubex/mihomo/component/ca"
 	"github.com/metacubex/mihomo/component/ech"
@@ -15,6 +11,8 @@ import (
 	LC "github.com/metacubex/mihomo/listener/config"
 	"github.com/metacubex/mihomo/listener/reality"
 	"github.com/metacubex/mihomo/ntp"
+	"github.com/pires/go-proxyproto"
+	"net"
 )
 
 type Listener struct {
@@ -67,7 +65,7 @@ func NewWithConfig(config LC.AuthServer, tunnel C.Tunnel, additions ...inbound.A
 	if err != nil {
 		return nil, err
 	}
-	l = proxyprotocol.NewListener(l, time.Second*5)
+	l = &proxyproto.Listener{Listener: l}
 
 	tlsConfig := &tlsC.Config{Time: ntp.Now}
 	var realityBuilder *reality.Builder
