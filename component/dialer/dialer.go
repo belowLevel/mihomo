@@ -57,7 +57,7 @@ func DialContext(ctx context.Context, network, address string, options ...Option
 	}
 
 	if len(ips) == 0 {
-		log.Debugln("unresolved ip for %s, reject", address)
+		log.Infoln("unresolved ip for %s, reject", address)
 		return NopConn{}, nil
 	}
 
