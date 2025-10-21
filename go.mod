@@ -2,8 +2,6 @@ module github.com/metacubex/mihomo
 
 go 1.24.0
 
-replace github.com/pires/go-proxyproto => github.com/asyning/go-proxyproto v1.1.2
-
 require (
 	github.com/bahlo/generic-list-go v0.2.0
 	github.com/coreos/go-iptables v0.8.0
