@@ -38,6 +38,7 @@ const (
 	TUIC
 	HYSTERIA2
 	ANYTLS
+	MIERU
 	INNER
 	SSH
 )
@@ -110,6 +111,8 @@ func (t Type) String() string {
 		return "Hysteria2"
 	case ANYTLS:
 		return "AnyTLS"
+	case MIERU:
+		return "Mieru"
 	case INNER:
 		return "Inner"
 	case SSH:
@@ -152,6 +155,8 @@ func ParseType(t string) (*Type, error) {
 		res = HYSTERIA2
 	case "ANYTLS":
 		res = ANYTLS
+	case "MIERU":
+		res = MIERU
 	case "INNER":
 		res = INNER
 
