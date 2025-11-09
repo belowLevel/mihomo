@@ -65,6 +65,7 @@ require (
 require (
 	github.com/gliderlabs/ssh v0.3.8
 	github.com/go-co-op/gocron v1.37.0
+	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/kardianos/service v1.2.4
 	github.com/pires/go-proxyproto v0.8.1
 	github.com/shirou/gopsutil/v4 v4.25.10

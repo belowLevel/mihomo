@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	lru "github.com/hashicorp/golang-lru/v2"
 	"net"
 	"net/netip"
 	"path/filepath"
@@ -65,7 +66,22 @@ var (
 	sniffingEnable    = false
 
 	ruleUpdateCallback = utils.NewCallback[P.RuleProvider]()
+
+	ruleCache *lru.Cache[string, *MatchResult]
 )
+
+func init() {
+	cache, err := lru.New[string, *MatchResult](1024)
+	if err != nil {
+		log.Fatalln("%v", err)
+	}
+	ruleCache = cache
+}
+
+type MatchResult struct {
+	proxy C.Proxy
+	rule  C.Rule
+}
 
 type tunnel struct{}
 
@@ -543,11 +559,22 @@ func handleTCPConn(connCtx C.ConnContext) {
 			_ = conn.SetReadDeadline(time.Time{})
 		}()
 	}
-
-	proxy, rule, err := resolveMetadata(metadata)
-	if err != nil {
-		log.Warnln("[Metadata] parse failed: %s", err.Error())
-		return
+	var proxy C.Proxy
+	var rule C.Rule
+	var err error
+	if result, ok := ruleCache.Get(metadata.Host); ok {
+		proxy = result.proxy
+		rule = result.rule
+	} else {
+		proxy, rule, err = resolveMetadata(metadata)
+		if err != nil {
+			log.Warnln("[Metadata] parse failed: %s", err.Error())
+			return
+		}
+		ruleCache.Add(metadata.Host, &MatchResult{
+			proxy: proxy,
+			rule:  rule,
+		})
 	}
 
 	dialMetadata := metadata
