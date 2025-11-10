@@ -562,7 +562,11 @@ func handleTCPConn(connCtx C.ConnContext) {
 	var proxy C.Proxy
 	var rule C.Rule
 	var err error
-	if result, ok := ruleCache.Get(metadata.Host); ok {
+	var key = metadata.Host
+	if key == "" {
+		key = metadata.DstIP.String()
+	}
+	if result, ok := ruleCache.Get(key); ok {
 		proxy = result.proxy
 		rule = result.rule
 	} else {
@@ -571,7 +575,7 @@ func handleTCPConn(connCtx C.ConnContext) {
 			log.Warnln("[Metadata] parse failed: %s", err.Error())
 			return
 		}
-		ruleCache.Add(metadata.Host, &MatchResult{
+		ruleCache.Add(key, &MatchResult{
 			proxy: proxy,
 			rule:  rule,
 		})
