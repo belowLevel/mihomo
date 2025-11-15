@@ -67,7 +67,7 @@ var (
 
 	ruleUpdateCallback = utils.NewCallback[P.RuleProvider]()
 
-	ruleCache *lru.Cache[string, *MatchResult]
+	RuleCache *lru.Cache[string, *MatchResult]
 )
 
 func init() {
@@ -75,12 +75,12 @@ func init() {
 	if err != nil {
 		log.Fatalln("%v", err)
 	}
-	ruleCache = cache
+	RuleCache = cache
 }
 
 type MatchResult struct {
 	proxy C.Proxy
-	rule  C.Rule
+	Rule  C.Rule
 }
 
 type tunnel struct{}
@@ -566,18 +566,18 @@ func handleTCPConn(connCtx C.ConnContext) {
 	if key == "" {
 		key = metadata.DstIP.String()
 	}
-	if result, ok := ruleCache.Get(key); ok {
+	if result, ok := RuleCache.Get(key); ok {
 		proxy = result.proxy
-		rule = result.rule
+		rule = result.Rule
 	} else {
 		proxy, rule, err = resolveMetadata(metadata)
 		if err != nil {
 			log.Warnln("[Metadata] parse failed: %s", err.Error())
 			return
 		}
-		ruleCache.Add(key, &MatchResult{
+		RuleCache.Add(key, &MatchResult{
 			proxy: proxy,
-			rule:  rule,
+			Rule:  rule,
 		})
 	}
 

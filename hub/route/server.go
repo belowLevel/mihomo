@@ -5,6 +5,7 @@ import (
 	"crypto/subtle"
 	"encoding/json"
 	"fmt"
+	"github.com/metacubex/mihomo/tunnel"
 	"net"
 	"net/http"
 	"os"
@@ -143,6 +144,31 @@ func router(isDebug bool, secret string, dohServer string, cors Cors) http.Handl
 		//r.Mount("/upgrade", upgradeRouter())
 		addExternalRouters(r)
 		r.Get("/reboot", reboot)
+
+		r.Get("/rule-cache", func(writer http.ResponseWriter, request *http.Request) {
+			writer.Header().Set("Content-Type", "application/json")
+			type RuleCacheInfo struct {
+				Len   int                 `json:"len"`
+				Names []map[string]string `json:"names"`
+			}
+			names := make([]map[string]string, 0)
+			keys := tunnel.RuleCache.Keys()
+			for _, k := range keys {
+				rule := ""
+				v, ok := tunnel.RuleCache.Get(k)
+				if ok {
+					rule = v.Rule.RuleType().String() + "(" + v.Rule.Payload() + ")"
+				}
+				names = append(names, map[string]string{
+					k: rule,
+				})
+			}
+			rci := &RuleCacheInfo{
+				Len:   len(names),
+				Names: names,
+			}
+			json.NewEncoder(writer).Encode(rci)
+		})
 	})
 
 	if uiPath != "" {
