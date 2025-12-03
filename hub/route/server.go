@@ -52,8 +52,10 @@ func SetEmbedMode(embed bool) {
 }
 
 type Traffic struct {
-	Up   int64 `json:"up"`
-	Down int64 `json:"down"`
+	Up        int64 `json:"up"`
+	Down      int64 `json:"down"`
+	UpTotal   int64 `json:"upTotal"`
+	DownTotal int64 `json:"downTotal"`
 }
 
 type Memory struct {
@@ -407,38 +409,9 @@ func traffic(w http.ResponseWriter, r *http.Request) {
 	defer tick.Stop()
 	cs := statistic.ChannelManager
 	buf := &bytes.Buffer{}
-
-	//proxies := tunnel.Proxies()
-	//
-	//selectors := make([]*outboundgroup.Selector, 0)
-	//for _, proxy := range proxies {
-	//	if adapterP, ok := proxy.(*adapter.Proxy); ok {
-	//		adapter := adapterP.ProxyAdapter
-	//		if adapterP.Type() == C.Selector {
-	//			selector := adapter.(*outboundgroup.Selector)
-	//			selectors = append(selectors, selector)
-	//		}
-	//	}
-	//}
-
-	var err error
 	for range tick.C {
 		buf.Reset()
 		var traffics map[string]Traffic = make(map[string]Traffic)
-		//for _, s := range selectors {
-		//	id := s.Now()
-		//	if _, ok := traffics[id]; ok {
-		//		continue
-		//	}
-		//	if v, ok := cs[id]; ok {
-		//		up, down := v.Now()
-		//		traffic := Traffic{
-		//			Up:   up,
-		//			Down: down,
-		//		}
-		//		traffics[id] = traffic
-		//	}
-		//}
 		for k, v := range cs {
 			if v.HasCollections() {
 				up, down := v.Now()
@@ -450,18 +423,16 @@ func traffic(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := json.NewEncoder(buf).Encode(traffics); err != nil {
-			break
-		}
+			if wsConn == nil {
+				_, err = w.Write(buf.Bytes())
+				w.(http.Flusher).Flush()
+			} else {
+				err = wsutil.WriteMessage(wsConn, ws.StateServerSide, ws.OpText, buf.Bytes())
+			}
 
-		if wsConn == nil {
-			_, err = w.Write(buf.Bytes())
-			w.(http.Flusher).Flush()
-		} else {
-			err = wsutil.WriteMessage(wsConn, ws.StateServerSide, ws.OpText, buf.Bytes())
-		}
-
-		if err != nil {
-			break
+			if err != nil {
+				break
+			}
 		}
 	}
 }
