@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"reflect"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/metacubex/mihomo/adapter"
@@ -20,6 +20,7 @@ import (
 	"github.com/metacubex/mihomo/tunnel/statistic"
 
 	"github.com/dlclark/regexp2"
+	"github.com/metacubex/http"
 	"gopkg.in/yaml.v3"
 )
 
@@ -43,6 +44,7 @@ type providerForApi struct {
 }
 
 type baseProvider struct {
+	mutex       sync.RWMutex
 	name        string
 	proxies     []C.Proxy
 	healthCheck *HealthCheck
@@ -54,6 +56,8 @@ func (bp *baseProvider) Name() string {
 }
 
 func (bp *baseProvider) Version() uint32 {
+	bp.mutex.RLock()
+	defer bp.mutex.RUnlock()
 	return bp.version
 }
 
@@ -73,10 +77,14 @@ func (bp *baseProvider) Type() P.ProviderType {
 }
 
 func (bp *baseProvider) Proxies() []C.Proxy {
+	bp.mutex.RLock()
+	defer bp.mutex.RUnlock()
 	return bp.proxies
 }
 
 func (bp *baseProvider) Count() int {
+	bp.mutex.RLock()
+	defer bp.mutex.RUnlock()
 	return len(bp.proxies)
 }
 
@@ -93,6 +101,8 @@ func (bp *baseProvider) RegisterHealthCheckTask(url string, expectedStatus utils
 }
 
 func (bp *baseProvider) setProxies(proxies []C.Proxy) {
+	bp.mutex.Lock()
+	defer bp.mutex.Unlock()
 	bp.proxies = proxies
 	bp.version += 1
 	bp.healthCheck.setProxies(proxies)
@@ -155,17 +165,15 @@ func (pp *proxySetProvider) Initial() error {
 }
 
 func (pp *proxySetProvider) closeAllConnections() {
-	for _, v := range statistic.ChannelManager {
-		v.Range(func(c statistic.Tracker) bool {
-			for _, chain := range c.Chains() {
-				if chain == pp.Name() {
-					_ = c.Close()
-					break
-				}
+	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
+		for _, chain := range c.ProviderChains() {
+			if chain == pp.Name() {
+				_ = c.Close()
+				break
 			}
-			return true
-		})
-	}
+		}
+		return true
+	})
 }
 
 func (pp *proxySetProvider) Close() error {

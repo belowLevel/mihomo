@@ -3,16 +3,14 @@ package route
 import (
 	"bytes"
 	"encoding/json"
-	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/metacubex/mihomo/tunnel/statistic"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/render"
-	"github.com/gobwas/ws"
-	"github.com/gobwas/ws/wsutil"
+	"github.com/metacubex/chi"
+	"github.com/metacubex/chi/render"
+	"github.com/metacubex/http"
 )
 
 func connectionRouter() http.Handler {
@@ -25,12 +23,12 @@ func connectionRouter() http.Handler {
 
 func getConnections(w http.ResponseWriter, r *http.Request) {
 	if !(r.Header.Get("Upgrade") == "websocket") {
-		snapshots := statistic.Snapshots()
-		render.JSON(w, r, snapshots)
+		snapshot := statistic.DefaultManager.Snapshot()
+		render.JSON(w, r, snapshot)
 		return
 	}
 
-	conn, _, _, err := ws.UpgradeHTTP(r, w)
+	conn, _, err := wsUpgrade(r, w)
 	if err != nil {
 		return
 	}
@@ -51,12 +49,12 @@ func getConnections(w http.ResponseWriter, r *http.Request) {
 	buf := &bytes.Buffer{}
 	sendSnapshot := func() error {
 		buf.Reset()
-		snapshots := statistic.Snapshots()
-		if err := json.NewEncoder(buf).Encode(snapshots); err != nil {
+		snapshot := statistic.DefaultManager.Snapshot()
+		if err := json.NewEncoder(buf).Encode(snapshot); err != nil {
 			return err
 		}
 
-		return wsutil.WriteMessage(conn, ws.StateServerSide, ws.OpText, buf.Bytes())
+		return wsWriteServerText(conn, buf.Bytes())
 	}
 
 	if err := sendSnapshot(); err != nil {
@@ -74,23 +72,16 @@ func getConnections(w http.ResponseWriter, r *http.Request) {
 
 func closeConnection(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-here:
-	for _, manager := range statistic.ChannelManager {
-		if c := manager.Get(id); c != nil {
-			_ = c.Close()
-			break here
-		}
-
+	if c := statistic.DefaultManager.Get(id); c != nil {
+		_ = c.Close()
 	}
 	render.NoContent(w, r)
 }
 
 func closeAllConnections(w http.ResponseWriter, r *http.Request) {
-	for _, v := range statistic.ChannelManager {
-		v.Range(func(c statistic.Tracker) bool {
-			_ = c.Close()
-			return true
-		})
-	}
+	statistic.DefaultManager.Range(func(c statistic.Tracker) bool {
+		_ = c.Close()
+		return true
+	})
 	render.NoContent(w, r)
 }

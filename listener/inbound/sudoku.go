@@ -13,13 +13,18 @@ import (
 
 type SudokuOption struct {
 	BaseOption
-	Key                    string `inbound:"key"`
-	AEADMethod             string `inbound:"aead-method,omitempty"`
-	PaddingMin             *int   `inbound:"padding-min,omitempty"`
-	PaddingMax             *int   `inbound:"padding-max,omitempty"`
-	TableType              string `inbound:"table-type,omitempty"` // "prefer_ascii" or "prefer_entropy"
-	HandshakeTimeoutSecond *int   `inbound:"handshake-timeout,omitempty"`
-	EnablePureDownlink     *bool  `inbound:"enable-pure-downlink,omitempty"`
+	Key                    string   `inbound:"key"`
+	AEADMethod             string   `inbound:"aead-method,omitempty"`
+	PaddingMin             *int     `inbound:"padding-min,omitempty"`
+	PaddingMax             *int     `inbound:"padding-max,omitempty"`
+	TableType              string   `inbound:"table-type,omitempty"` // "prefer_ascii" or "prefer_entropy"
+	HandshakeTimeoutSecond *int     `inbound:"handshake-timeout,omitempty"`
+	EnablePureDownlink     *bool    `inbound:"enable-pure-downlink,omitempty"`
+	CustomTable            string   `inbound:"custom-table,omitempty"` // optional custom byte layout, e.g. xpxvvpvv
+	CustomTables           []string `inbound:"custom-tables,omitempty"`
+
+	// mihomo private extension (not the part of standard Sudoku protocol)
+	MuxOption MuxOption `inbound:"mux-option,omitempty"`
 }
 
 func (o SudokuOption) Equal(config C.InboundConfig) bool {
@@ -52,7 +57,10 @@ func NewSudoku(options *SudokuOption) (*Sudoku, error) {
 		TableType:              options.TableType,
 		HandshakeTimeoutSecond: options.HandshakeTimeoutSecond,
 		EnablePureDownlink:     options.EnablePureDownlink,
+		CustomTable:            options.CustomTable,
+		CustomTables:           options.CustomTables,
 	}
+	serverConf.MuxOption = options.MuxOption.Build()
 
 	return &Sudoku{
 		Base:       base,

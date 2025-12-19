@@ -1,16 +1,14 @@
 package route
 
 import (
-	"github.com/metacubex/mihomo/component/updater"
-	"net/http"
 	"net/netip"
 	"path/filepath"
-	"sync"
 
 	"github.com/metacubex/mihomo/adapter/inbound"
 	"github.com/metacubex/mihomo/component/dialer"
 	"github.com/metacubex/mihomo/component/process"
 	"github.com/metacubex/mihomo/component/resolver"
+	"github.com/metacubex/mihomo/component/updater"
 	"github.com/metacubex/mihomo/config"
 	C "github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/hub/executor"
@@ -19,13 +17,9 @@ import (
 	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/mihomo/tunnel"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/render"
-)
-
-var (
-	updateGeoMux sync.Mutex
-	updatingGeo  = false
+	"github.com/metacubex/chi"
+	"github.com/metacubex/chi/render"
+	"github.com/metacubex/http"
 )
 
 func configRouter() http.Handler {

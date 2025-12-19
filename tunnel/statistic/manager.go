@@ -1,35 +1,28 @@
 package statistic
 
 import (
-	"encoding/json"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/metacubex/mihomo/common/atomic"
 	"github.com/metacubex/mihomo/common/xsync"
-	"github.com/metacubex/mihomo/log"
-	"github.com/shirou/gopsutil/v4/process"
+	"github.com/metacubex/mihomo/component/memory"
 )
 
-var Processor *process.Process
-var ChannelManager map[string]*Manager
-var ChannelMutex sync.Mutex
+var DefaultManager *Manager
 
 func init() {
-	ChannelManager = make(map[string]*Manager)
-	Processor = &process.Process{Pid: int32(os.Getpid())}
+	DefaultManager = &Manager{
+		uploadTemp:    atomic.NewInt64(0),
+		downloadTemp:  atomic.NewInt64(0),
+		uploadBlip:    atomic.NewInt64(0),
+		downloadBlip:  atomic.NewInt64(0),
+		uploadTotal:   atomic.NewInt64(0),
+		downloadTotal: atomic.NewInt64(0),
+		pid:           int32(os.Getpid()),
+	}
 
-	go func() {
-		ticker := time.NewTicker(time.Second)
-		for range ticker.C {
-			ChannelMutex.Lock()
-			for _, v := range ChannelManager {
-				v.handle()
-			}
-			ChannelMutex.Unlock()
-		}
-	}()
+	go DefaultManager.handle()
 }
 
 type Manager struct {
@@ -40,20 +33,8 @@ type Manager struct {
 	downloadBlip  atomic.Int64
 	uploadTotal   atomic.Int64
 	downloadTotal atomic.Int64
-}
-
-func NewManager(channelname string) *Manager {
-	manager := &Manager{
-		//connections:   xsync.NewMapOf[string, Tracker](),
-		uploadTemp:    atomic.NewInt64(0),
-		downloadTemp:  atomic.NewInt64(0),
-		uploadBlip:    atomic.NewInt64(0),
-		downloadBlip:  atomic.NewInt64(0),
-		uploadTotal:   atomic.NewInt64(0),
-		downloadTotal: atomic.NewInt64(0),
-	}
-	ChannelManager[channelname] = manager
-	return manager
+	pid           int32
+	memory        uint64
 }
 
 func (m *Manager) Join(c Tracker) {
@@ -95,8 +76,13 @@ func (m *Manager) Total() (up, down int64) {
 	return m.uploadTotal.Load(), m.downloadTotal.Load()
 }
 
+func (m *Manager) Memory() uint64 {
+	m.updateMemory()
+	return m.memory
+}
+
 func (m *Manager) Snapshot() *Snapshot {
-	var connections []*TrackerInfo = make([]*TrackerInfo, 0)
+	var connections []*TrackerInfo
 	m.Range(func(c Tracker) bool {
 		connections = append(connections, c.Info())
 		return true
@@ -105,7 +91,16 @@ func (m *Manager) Snapshot() *Snapshot {
 		UploadTotal:   m.uploadTotal.Load(),
 		DownloadTotal: m.downloadTotal.Load(),
 		Connections:   connections,
+		Memory:        m.memory,
 	}
+}
+
+func (m *Manager) updateMemory() {
+	stat, err := memory.GetMemoryInfo(m.pid)
+	if err != nil {
+		return
+	}
+	m.memory = stat.RSS
 }
 
 func (m *Manager) ResetStatistic() {
@@ -118,14 +113,12 @@ func (m *Manager) ResetStatistic() {
 }
 
 func (m *Manager) handle() {
-	m.uploadBlip.Store(m.uploadTemp.Load())
-	m.uploadTemp.Store(0)
-	m.downloadBlip.Store(m.downloadTemp.Load())
-	m.downloadTemp.Store(0)
-}
+	ticker := time.NewTicker(time.Second)
 
-func (m *Manager) HasCollections() bool {
-	return m.connections.Size() > 0
+	for range ticker.C {
+		m.uploadBlip.Store(m.uploadTemp.Swap(0))
+		m.downloadBlip.Store(m.downloadTemp.Swap(0))
+	}
 }
 
 type Snapshot struct {
@@ -133,46 +126,4 @@ type Snapshot struct {
 	UploadTotal   int64          `json:"uploadTotal"`
 	Connections   []*TrackerInfo `json:"connections"`
 	Memory        uint64         `json:"memory"`
-}
-
-func Snapshots() map[string]*Snapshot {
-	var snapshots map[string]*Snapshot = make(map[string]*Snapshot)
-	for k, v := range ChannelManager {
-		snapshots[k] = v.Snapshot()
-	}
-	return snapshots
-}
-
-func SaveChannelsData(filename string) {
-	snapshots := Snapshots()
-	for _, v := range snapshots {
-		v.Connections = nil
-	}
-
-	if bytes, err := json.Marshal(snapshots); err == nil {
-		err = os.WriteFile(filename, bytes, 0666)
-		if err != nil {
-			log.Errorln(err.Error())
-		}
-
-	}
-}
-func RestoreChannelsData(filename string) {
-	bytes, err := os.ReadFile(filename)
-	if err != nil {
-		return
-	}
-	var snapshots = map[string]Snapshot{}
-	err = json.Unmarshal(bytes, &snapshots)
-	if err != nil {
-		log.Errorln(err.Error())
-		return
-	}
-	ChannelMutex.Lock()
-	defer ChannelMutex.Unlock()
-	for k, v := range snapshots {
-		manager := NewManager(k)
-		manager.downloadTotal.Add(v.DownloadTotal)
-		manager.uploadTotal.Add(v.UploadTotal)
-	}
 }

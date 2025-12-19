@@ -50,6 +50,8 @@ func testInboundSudoku(t *testing.T, inboundOptions inbound.SudokuOption, outbou
 	defer out.Close()
 
 	tunnel.DoTest(t, out)
+
+	testSingMux(t, tunnel, out)
 }
 
 func TestInboundSudoku_Basic(t *testing.T) {
@@ -127,6 +129,30 @@ func TestInboundSudoku_PackedDownlink(t *testing.T) {
 	outboundOptions := outbound.SudokuOption{
 		Key:                key,
 		EnablePureDownlink: &enablePure,
+	}
+	testInboundSudoku(t, inboundOptions, outboundOptions)
+
+	t.Run("ed25519key", func(t *testing.T) {
+		inboundOptions := inboundOptions
+		outboundOptions := outboundOptions
+		inboundOptions.Key = sudokuPublicKey
+		outboundOptions.Key = sudokuPrivateKey
+		testInboundSudoku(t, inboundOptions, outboundOptions)
+	})
+}
+
+func TestInboundSudoku_CustomTable(t *testing.T) {
+	key := "test_key_custom"
+	custom := "xpxvvpvv"
+	inboundOptions := inbound.SudokuOption{
+		Key:         key,
+		TableType:   "prefer_entropy",
+		CustomTable: custom,
+	}
+	outboundOptions := outbound.SudokuOption{
+		Key:         key,
+		TableType:   "prefer_entropy",
+		CustomTable: custom,
 	}
 	testInboundSudoku(t, inboundOptions, outboundOptions)
 

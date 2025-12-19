@@ -4,12 +4,8 @@ import (
 	"bytes"
 	"crypto/subtle"
 	"encoding/json"
-	"fmt"
-	"github.com/metacubex/mihomo/tunnel"
 	"net"
-	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime/debug"
 	"strings"
@@ -20,20 +16,17 @@ import (
 	"github.com/metacubex/mihomo/common/utils"
 	"github.com/metacubex/mihomo/component/ca"
 	"github.com/metacubex/mihomo/component/ech"
-	tlsC "github.com/metacubex/mihomo/component/tls"
 	C "github.com/metacubex/mihomo/constant"
 	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/mihomo/ntp"
 	"github.com/metacubex/mihomo/tunnel/statistic"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/render"
-	"github.com/gobwas/ws"
-	"github.com/gobwas/ws/wsutil"
-	S "github.com/kardianos/service"
-	cs "github.com/metacubex/mihomo/service"
-	"github.com/sagernet/cors"
+	"github.com/metacubex/chi"
+	"github.com/metacubex/chi/cors"
+	"github.com/metacubex/chi/middleware"
+	"github.com/metacubex/chi/render"
+	"github.com/metacubex/http"
+	"github.com/metacubex/tls"
 )
 
 var (
@@ -107,8 +100,7 @@ func SetUIPath(path string) {
 	uiPath = C.Path.Resolve(path)
 }
 
-func router(isDebug bool, secret string, dohServer string, cors Cors) http.Handler {
-	isDebug = true
+func router(isDebug bool, secret string, dohServer string, cors Cors) *chi.Mux {
 	r := chi.NewRouter()
 	cors.Apply(r)
 	if isDebug {
@@ -140,37 +132,12 @@ func router(isDebug bool, secret string, dohServer string, cors Cors) http.Handl
 		r.Mount("/providers/rules", ruleProviderRouter())
 		r.Mount("/cache", cacheRouter())
 		r.Mount("/dns", dnsRouter())
-		//if !embedMode { // disallow restart in embed mode
-		//	r.Mount("/restart", restartRouter())
-		//}
-		//r.Mount("/upgrade", upgradeRouter())
+		if !embedMode { // disallow restart in embed mode
+			r.Mount("/restart", restartRouter())
+		}
+		r.Mount("/upgrade", upgradeRouter())
 		addExternalRouters(r)
-		r.Get("/reboot", reboot)
 
-		r.Get("/rule-cache", func(writer http.ResponseWriter, request *http.Request) {
-			writer.Header().Set("Content-Type", "application/json")
-			type RuleCacheInfo struct {
-				Len   int                 `json:"len"`
-				Names []map[string]string `json:"names"`
-			}
-			names := make([]map[string]string, 0)
-			keys := tunnel.RuleCache.Keys()
-			for _, k := range keys {
-				rule := ""
-				v, ok := tunnel.RuleCache.Get(k)
-				if ok {
-					rule = v.Rule.RuleType().String() + "(" + v.Rule.Payload() + ")"
-				}
-				names = append(names, map[string]string{
-					k: rule,
-				})
-			}
-			rci := &RuleCacheInfo{
-				Len:   len(names),
-				Names: names,
-			}
-			json.NewEncoder(writer).Encode(rci)
-		})
 	})
 
 	if uiPath != "" {
@@ -237,16 +204,16 @@ func startTLS(cfg *Config) {
 		}
 
 		log.Infoln("RESTful API tls listening at: %s", l.Addr().String())
-		tlsConfig := &tlsC.Config{Time: ntp.Now}
+		tlsConfig := &tls.Config{Time: ntp.Now}
 		tlsConfig.NextProtos = []string{"h2", "http/1.1"}
-		tlsConfig.Certificates = []tlsC.Certificate{tlsC.UCertificate(cert)}
-		tlsConfig.ClientAuth = tlsC.ClientAuthTypeFromString(cfg.ClientAuthType)
+		tlsConfig.Certificates = []tls.Certificate{cert}
+		tlsConfig.ClientAuth = ca.ClientAuthTypeFromString(cfg.ClientAuthType)
 		if len(cfg.ClientAuthCert) > 0 {
-			if tlsConfig.ClientAuth == tlsC.NoClientCert {
-				tlsConfig.ClientAuth = tlsC.RequireAndVerifyClientCert
+			if tlsConfig.ClientAuth == tls.NoClientCert {
+				tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
 			}
 		}
-		if tlsConfig.ClientAuth == tlsC.VerifyClientCertIfGiven || tlsConfig.ClientAuth == tlsC.RequireAndVerifyClientCert {
+		if tlsConfig.ClientAuth == tls.VerifyClientCertIfGiven || tlsConfig.ClientAuth == tls.RequireAndVerifyClientCert {
 			pool, err := ca.LoadCertificates(cfg.ClientAuthCert, C.Path)
 			if err != nil {
 				log.Errorln("External controller tls listen error: %s", err)
@@ -266,7 +233,7 @@ func startTLS(cfg *Config) {
 			Handler: router(cfg.IsDebug, cfg.Secret, cfg.DohServer, cfg.Cors),
 		}
 		tlsServer = server
-		if err = server.Serve(tlsC.NewListenerForHttps(l, server, tlsConfig)); err != nil {
+		if err = server.Serve(tls.NewListener(l, tlsConfig)); err != nil {
 			log.Errorln("External controller tls serve error: %s", err)
 		}
 	}
@@ -394,7 +361,7 @@ func traffic(w http.ResponseWriter, r *http.Request) {
 	var wsConn net.Conn
 	if r.Header.Get("Upgrade") == "websocket" {
 		var err error
-		wsConn, _, _, err = ws.UpgradeHTTP(r, w)
+		wsConn, _, err = wsUpgrade(r, w)
 		if err != nil {
 			return
 		}
@@ -407,66 +374,18 @@ func traffic(w http.ResponseWriter, r *http.Request) {
 
 	tick := time.NewTicker(time.Second)
 	defer tick.Stop()
-	cs := statistic.ChannelManager
+	t := statistic.DefaultManager
 	buf := &bytes.Buffer{}
+	var err error
 	for range tick.C {
 		buf.Reset()
-		var traffics map[string]Traffic = make(map[string]Traffic)
-		for k, v := range cs {
-			if v.HasCollections() {
-				up, down := v.Now()
-				traffics[k] = Traffic{
-					Up:   up,
-					Down: down,
-				}
-			}
-		}
-
-		if err := json.NewEncoder(buf).Encode(traffics); err != nil {
-			if wsConn == nil {
-				_, err = w.Write(buf.Bytes())
-				w.(http.Flusher).Flush()
-			} else {
-				err = wsutil.WriteMessage(wsConn, ws.StateServerSide, ws.OpText, buf.Bytes())
-			}
-
-			if err != nil {
-				break
-			}
-		}
-	}
-}
-
-func memory(w http.ResponseWriter, r *http.Request) {
-	var wsConn net.Conn
-	if r.Header.Get("Upgrade") == "websocket" {
-		var err error
-		wsConn, _, _, err = ws.UpgradeHTTP(r, w)
-		if err != nil {
-			return
-		}
-	}
-
-	if wsConn == nil {
-		w.Header().Set("Content-Type", "application/json")
-		render.Status(r, http.StatusOK)
-	}
-
-	tick := time.NewTicker(time.Second)
-	defer tick.Stop()
-
-	buf := &bytes.Buffer{}
-
-	for range tick.C {
-		buf.Reset()
-
-		stat, err := statistic.Processor.MemoryInfo()
-		if err != nil {
-			return
-		}
-		inuse := stat.RSS
-		if err := json.NewEncoder(buf).Encode(Memory{
-			Inuse: inuse,
+		up, down := t.Now()
+		upTotal, downTotal := t.Total()
+		if err := json.NewEncoder(buf).Encode(Traffic{
+			Up:        up,
+			Down:      down,
+			UpTotal:   upTotal,
+			DownTotal: downTotal,
 		}); err != nil {
 			break
 		}
@@ -475,7 +394,57 @@ func memory(w http.ResponseWriter, r *http.Request) {
 			_, err = w.Write(buf.Bytes())
 			w.(http.Flusher).Flush()
 		} else {
-			err = wsutil.WriteMessage(wsConn, ws.StateServerSide, ws.OpText, buf.Bytes())
+			err = wsWriteServerText(wsConn, buf.Bytes())
+		}
+
+		if err != nil {
+			break
+		}
+	}
+}
+
+func memory(w http.ResponseWriter, r *http.Request) {
+	var wsConn net.Conn
+	if r.Header.Get("Upgrade") == "websocket" {
+		var err error
+		wsConn, _, err = wsUpgrade(r, w)
+		if err != nil {
+			return
+		}
+	}
+
+	if wsConn == nil {
+		w.Header().Set("Content-Type", "application/json")
+		render.Status(r, http.StatusOK)
+	}
+
+	tick := time.NewTicker(time.Second)
+	defer tick.Stop()
+	t := statistic.DefaultManager
+	buf := &bytes.Buffer{}
+	var err error
+	first := true
+	for range tick.C {
+		buf.Reset()
+
+		inuse := t.Memory()
+		// make chat.js begin with zero
+		// this is shit var,but we need output 0 for first time
+		if first {
+			inuse = 0
+			first = false
+		}
+		if err := json.NewEncoder(buf).Encode(Memory{
+			Inuse:   inuse,
+			OSLimit: 0,
+		}); err != nil {
+			break
+		}
+		if wsConn == nil {
+			_, err = w.Write(buf.Bytes())
+			w.(http.Flusher).Flush()
+		} else {
+			err = wsWriteServerText(wsConn, buf.Bytes())
 		}
 
 		if err != nil {
@@ -521,7 +490,7 @@ func getLogs(w http.ResponseWriter, r *http.Request) {
 	var wsConn net.Conn
 	if r.Header.Get("Upgrade") == "websocket" {
 		var err error
-		wsConn, _, _, err = ws.UpgradeHTTP(r, w)
+		wsConn, _, err = wsUpgrade(r, w)
 		if err != nil {
 			return
 		}
@@ -580,7 +549,7 @@ func getLogs(w http.ResponseWriter, r *http.Request) {
 			_, err = w.Write(buf.Bytes())
 			w.(http.Flusher).Flush()
 		} else {
-			err = wsutil.WriteMessage(wsConn, ws.StateServerSide, ws.OpText, buf.Bytes())
+			err = wsWriteServerText(wsConn, buf.Bytes())
 		}
 
 		if err != nil {
@@ -591,40 +560,4 @@ func getLogs(w http.ResponseWriter, r *http.Request) {
 
 func version(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, render.M{"meta": C.Meta, "version": C.Version})
-}
-
-func reboot(w http.ResponseWriter, r *http.Request) {
-
-	if cs.IsOpenWrt() {
-		confPath := "/etc/init.d/" + cs.ServiceName
-		cmd := exec.Command(confPath, "restart")
-		err := cmd.Start()
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "%v", err)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	status, _ := cs.Srv.Status()
-	if status == S.StatusUnknown {
-		w.WriteHeader(http.StatusServiceUnavailable)
-	} else {
-		execPath, err := os.Executable()
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "%v", err)
-			return
-		}
-		cmd := exec.Command(execPath, "-s", "restart")
-		err = cmd.Start()
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "%v", err)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-	}
 }
