@@ -18,6 +18,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/metacubex/mihomo/component/ca"
+
 	"github.com/metacubex/http"
 	"github.com/metacubex/http/httputil"
 	"github.com/metacubex/tls"
@@ -211,9 +213,12 @@ func newHTTPClient(serverAddress string, opts TunnelDialOptions, maxIdleConns in
 		},
 	}
 	if scheme == "https" {
-		transport.TLSClientConfig = &tls.Config{
+		transport.TLSClientConfig, err = ca.GetTLSConfig(ca.Option{TLSConfig: &tls.Config{
 			ServerName: serverName,
 			MinVersion: tls.VersionTLS12,
+		}})
+		if err != nil {
+			return nil, httpClientTarget{}, err
 		}
 	}
 
