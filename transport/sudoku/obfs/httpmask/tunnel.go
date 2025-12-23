@@ -5,21 +5,22 @@ import (
 	"bytes"
 	"context"
 	crand "crypto/rand"
-	"crypto/tls"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
 	mrand "math/rand"
 	"net"
-	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/metacubex/http"
+	"github.com/metacubex/http/httputil"
+	"github.com/metacubex/tls"
 )
 
 type TunnelMode string
