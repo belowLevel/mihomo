@@ -501,6 +501,7 @@ func (c *streamSplitConn) pullLoop() {
 				case c.rxc <- payload:
 				case <-c.closed:
 					_ = resp.Body.Close()
+					cancel()
 					return
 				}
 			}
