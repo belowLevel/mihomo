@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/metacubex/mihomo/adapter/inbound"
+	micom "github.com/metacubex/mihomo/common"
 	"github.com/metacubex/mihomo/common/sockopt"
 	C "github.com/metacubex/mihomo/constant"
 	LC "github.com/metacubex/mihomo/listener/config"
@@ -32,12 +33,14 @@ import (
 )
 
 type Listener struct {
-	closed       bool
-	config       LC.ShadowsocksServer
-	listeners    []net.Listener
-	udpListeners []net.PacketConn
-	service      shadowsocks.Service
-	simpleObfs   func(net.Conn) net.Conn
+	closed            bool
+	config            LC.ShadowsocksServer
+	listeners         []net.Listener
+	udpListeners      []net.PacketConn
+	service           shadowsocks.Service
+	simpleObfs        func(net.Conn) net.Conn
+	maxPacingRate     uint64
+	congestionControl string
 }
 
 var _listener *Listener
@@ -266,6 +269,26 @@ func (l *Listener) AddrList() (addrList []net.Addr) {
 }
 
 func (l *Listener) HandleConn(conn net.Conn, tunnel C.Tunnel, additions ...inbound.Addition) {
+	if l.config.MaxPacingRate > 0 {
+		tcpConn, ok := conn.(*net.TCPConn)
+		if ok {
+			if l.config.CongestionControl == "" {
+				err := micom.SetMaxPacingRate(tcpConn, l.config.MaxPacingRate)
+				if err != nil {
+					log.Errorln("%s", err.Error())
+				} else {
+					log.Warnln("ss SetMaxPacingRate %d", l.config.MaxPacingRate)
+				}
+			} else {
+				err := micom.SetCongestion(tcpConn, l.config.CongestionControl, l.config.MaxPacingRate)
+				if err != nil {
+					log.Errorln("%s", err.Error())
+				} else {
+					log.Warnln("ss CongestionControl %s SetMaxPacingRate %d", l.config.CongestionControl, l.config.MaxPacingRate)
+				}
+			}
+		}
+	}
 	user, loaded := shadowtls.UserFromConn(conn)
 	if jlsUser, jlsLoaded := jls.UserFromConn(conn); jlsLoaded {
 		user, loaded = jlsUser, true

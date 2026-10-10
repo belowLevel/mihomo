@@ -44,6 +44,7 @@ const (
 	TRUSTTUNNEL
 	SHADOWQUIC
 	INNER
+	NAIVE
 )
 
 type AddrType byte
@@ -126,6 +127,8 @@ func (t Type) String() string {
 		return "ShadowQuic"
 	case INNER:
 		return "Inner"
+	case NAIVE:
+		return "Naive"
 	default:
 		return "Unknown"
 	}

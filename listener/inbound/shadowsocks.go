@@ -11,15 +11,17 @@ import (
 
 type ShadowSocksOption struct {
 	BaseOption
-	Password   string     `inbound:"password"`
-	Cipher     string     `inbound:"cipher"`
-	UDP        bool       `inbound:"udp,omitempty"`
-	MuxOption  MuxOption  `inbound:"mux-option,omitempty"`
-	ShadowTLS  ShadowTLS  `inbound:"shadow-tls,omitempty"`
-	ResTLS     ResTLS     `inbound:"res-tls,omitempty"`
-	JLSConfig  JLSConfig  `inbound:"jls-config,omitempty"`
-	KcpTun     KcpTun     `inbound:"kcp-tun,omitempty"`
-	SimpleObfs SimpleObfs `inbound:"simple-obfs,omitempty"`
+	Password          string     `inbound:"password"`
+	Cipher            string     `inbound:"cipher"`
+	UDP               bool       `inbound:"udp,omitempty"`
+	MuxOption         MuxOption  `inbound:"mux-option,omitempty"`
+	ShadowTLS         ShadowTLS  `inbound:"shadow-tls,omitempty"`
+	ResTLS            ResTLS     `inbound:"res-tls,omitempty"`
+	JLSConfig         JLSConfig  `inbound:"jls-config,omitempty"`
+	KcpTun            KcpTun     `inbound:"kcp-tun,omitempty"`
+	SimpleObfs        SimpleObfs `inbound:"simple-obfs,omitempty"`
+	MaxPacingRate     uint64     `inbound:"max-pacing-rate,omitempty"`
+	CongestionControl string     `inbound:"congestion-control,omitempty"`
 }
 
 type SimpleObfs struct {
@@ -54,17 +56,19 @@ func NewShadowSocks(options *ShadowSocksOption) (*ShadowSocks, error) {
 		Base:   base,
 		config: options,
 		ss: LC.ShadowsocksServer{
-			Enable:     true,
-			Listen:     base.RawAddress(),
-			Password:   options.Password,
-			Cipher:     options.Cipher,
-			Udp:        options.UDP,
-			MuxOption:  options.MuxOption.Build(),
-			ShadowTLS:  options.ShadowTLS.Build(),
-			ResTLS:     options.ResTLS.Build(),
-			JLSConfig:  options.JLSConfig.Build(),
-			KcpTun:     options.KcpTun.Build(),
-			SimpleObfs: options.SimpleObfs.Build(),
+			Enable:            true,
+			Listen:            base.RawAddress(),
+			Password:          options.Password,
+			Cipher:            options.Cipher,
+			Udp:               options.UDP,
+			MuxOption:         options.MuxOption.Build(),
+			ShadowTLS:         options.ShadowTLS.Build(),
+			ResTLS:            options.ResTLS.Build(),
+			JLSConfig:         options.JLSConfig.Build(),
+			KcpTun:            options.KcpTun.Build(),
+			SimpleObfs:        options.SimpleObfs.Build(),
+			CongestionControl: options.CongestionControl,
+			MaxPacingRate:     options.MaxPacingRate,
 		},
 	}, nil
 }
