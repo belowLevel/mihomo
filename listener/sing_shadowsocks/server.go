@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/metacubex/mihomo/adapter/inbound"
+	micom "github.com/metacubex/mihomo/common"
 	"github.com/metacubex/mihomo/common/sockopt"
 	C "github.com/metacubex/mihomo/constant"
 	LC "github.com/metacubex/mihomo/listener/config"
@@ -266,6 +267,10 @@ func (l *Listener) AddrList() (addrList []net.Addr) {
 }
 
 func (l *Listener) HandleConn(conn net.Conn, tunnel C.Tunnel, additions ...inbound.Addition) {
+	err2 := micom.SetCongestionMaxPacingRate(conn, l.config.CongestionControl, l.config.MaxPacingRate)
+	if err2 != nil {
+		log.Errorln("%s", err2.Error())
+	}
 	user, loaded := shadowtls.UserFromConn(conn)
 	if jlsUser, jlsLoaded := jls.UserFromConn(conn); jlsLoaded {
 		user, loaded = jlsUser, true
