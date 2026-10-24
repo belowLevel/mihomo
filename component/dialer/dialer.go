@@ -4,6 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/metacubex/mihomo/common/atomic"
+	"github.com/metacubex/mihomo/common/buf"
+	"github.com/metacubex/mihomo/component/keepalive"
+	"github.com/metacubex/mihomo/component/mptcp"
+	"github.com/metacubex/mihomo/component/resolver"
+	"github.com/metacubex/mihomo/log"
+	"io"
 	"net"
 	"net/netip"
 	"os"
@@ -11,11 +18,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-
-	"github.com/metacubex/mihomo/common/atomic"
-	"github.com/metacubex/mihomo/component/keepalive"
-	"github.com/metacubex/mihomo/component/mptcp"
-	"github.com/metacubex/mihomo/component/resolver"
 )
 
 const (
@@ -53,6 +55,19 @@ func DialContext(ctx context.Context, network, address string, options ...Option
 	ips, port, err := parseAddr(ctx, network, address, opt.resolver)
 	if err != nil {
 		return nil, err
+	}
+
+	adblocked := true
+	for _, ip := range ips {
+		if !ip.IsUnspecified() {
+			adblocked = false
+			break
+		}
+	}
+
+	if adblocked {
+		log.Debugln("mybe ad-blocked, %s", address)
+		return nopConn{}, nil
 	}
 
 	tcpConcurrent := GetTcpConcurrent()
@@ -432,3 +447,18 @@ func NewDialer(options ...Option) Dialer {
 	opt := applyOptions(options...)
 	return Dialer{Opt: opt}
 }
+
+type nopConn struct{}
+
+func (rw nopConn) Read(b []byte) (int, error) { return 0, io.EOF }
+
+func (rw nopConn) ReadBuffer(buffer *buf.Buffer) error { return io.EOF }
+
+func (rw nopConn) Write(b []byte) (int, error)          { return 0, io.EOF }
+func (rw nopConn) WriteBuffer(buffer *buf.Buffer) error { return io.EOF }
+func (rw nopConn) Close() error                         { return nil }
+func (rw nopConn) LocalAddr() net.Addr                  { return nil }
+func (rw nopConn) RemoteAddr() net.Addr                 { return nil }
+func (rw nopConn) SetDeadline(time.Time) error          { return nil }
+func (rw nopConn) SetReadDeadline(time.Time) error      { return nil }
+func (rw nopConn) SetWriteDeadline(time.Time) error     { return nil }

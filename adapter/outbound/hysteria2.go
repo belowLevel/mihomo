@@ -319,3 +319,12 @@ func NewHysteria2(option Hysteria2Option) (*Hysteria2, error) {
 
 	return outbound, nil
 }
+
+func (b *Hysteria2) ResolveUDP(ctx context.Context, metadata *C.Metadata) error {
+	addr, err := netip.ParseAddr(b.option.Server)
+	if err != nil {
+		return err
+	}
+	metadata.DstIP = addr
+	return nil
+}
