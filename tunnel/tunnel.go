@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/metacubex/mihomo/rules/common"
 	"net"
 	"net/netip"
 	"path/filepath"
@@ -205,6 +206,16 @@ func Listeners() map[string]C.InboundListener {
 // UpdateRules handle update rules
 func UpdateRules(newRules []C.Rule, newSubRule map[string][]C.Rule, rp map[string]P.RuleProvider) {
 	configMux.Lock()
+	for _, v := range rules {
+		ruleWrapper, ok := v.(C.RuleWrapper)
+		if ok {
+			rule := ruleWrapper.Unwrap()
+			domainTxtRule, ok := rule.(*common.DomainTxt)
+			if ok {
+				domainTxtRule.Close()
+			}
+		}
+	}
 	rules = newRules
 	ruleProviders = rp
 	subRules = newSubRule
