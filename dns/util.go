@@ -418,6 +418,9 @@ func batchExchange(ctx context.Context, clients []dnsClient, m *D.Msg) (msg *D.M
 	defer fast.Close()
 	domain := msgToDomain(m)
 	_, qTypeStr := msgToQtype(m)
+	if qTypeStr == "PTR" {
+		cache = false
+	}
 	for _, client := range clients {
 		if _, isRCodeClient := client.(rcodeClient); isRCodeClient {
 			msg, err = client.ExchangeContext(ctx, m)

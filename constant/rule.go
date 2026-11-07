@@ -40,6 +40,8 @@ const (
 	AND
 	OR
 	NOT
+	DomainTxt
+	DomainRecord
 )
 
 type RuleType int
@@ -118,6 +120,10 @@ func (rt RuleType) String() string {
 		return "OR"
 	case NOT:
 		return "NOT"
+	case DomainTxt:
+		return "TxTSite"
+	case DomainRecord:
+		return "RecSite"
 	default:
 		return "Unknown"
 	}

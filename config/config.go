@@ -1660,7 +1660,7 @@ func parseFakeIPRules(rawRules []string, ruleProviders map[string]P.RuleProvider
 
 func isDomainRule(rt C.RuleType) bool {
 	switch rt {
-	case C.Domain, C.DomainSuffix, C.DomainKeyword, C.DomainRegex, C.DomainWildcard, C.GEOSITE, C.RuleSet:
+	case C.Domain, C.DomainSuffix, C.DomainKeyword, C.DomainRegex, C.DomainWildcard, C.GEOSITE, C.RuleSet, C.DomainTxt:
 		return true
 	default:
 		return false

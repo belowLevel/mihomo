@@ -18,7 +18,7 @@ type Skipper struct {
 // ShouldSkipped return if domain should be skipped
 func (p *Skipper) ShouldSkipped(domain string) bool {
 	if len(p.Rules) > 0 {
-		metadata := &C.Metadata{Host: domain}
+		metadata := &C.Metadata{Host: domain, DNSMode: 53}
 		for _, rule := range p.Rules {
 			if matched, action := rule.Match(metadata, C.RuleMatchHelper{}); matched {
 				return action == UseRealIP
