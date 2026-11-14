@@ -7,6 +7,7 @@ import (
 const (
 	UseFakeIP = "fake-ip"
 	UseRealIP = "real-ip"
+	UseNullIp = "null-ip"
 )
 
 type Skipper struct {
@@ -16,22 +17,24 @@ type Skipper struct {
 }
 
 // ShouldSkipped return if domain should be skipped
-func (p *Skipper) ShouldSkipped(domain string) bool {
+func (p *Skipper) ShouldSkipped(domain string) (skip, nullIp bool) {
 	if len(p.Rules) > 0 {
-		metadata := &C.Metadata{Host: domain}
+		metadata := &C.Metadata{Host: domain, DNSMode: 53}
 		for _, rule := range p.Rules {
 			if matched, action := rule.Match(metadata, C.RuleMatchHelper{}); matched {
-				return action == UseRealIP
+				skip = action == UseRealIP
+				nullIp = action == UseNullIp
+				return
 			}
 		}
-		return false
+		return false, false
 	}
 
 	should := p.shouldSkipped(domain)
 	if p.Mode == C.FilterWhiteList {
-		return !should
+		return !should, false
 	}
-	return should
+	return should, false
 }
 
 func (p *Skipper) shouldSkipped(domain string) bool {

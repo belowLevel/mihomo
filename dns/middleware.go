@@ -1,6 +1,7 @@
 package dns
 
 import (
+	"net"
 	"net/netip"
 	"strings"
 	"time"
@@ -152,36 +153,51 @@ func withFakeIP(skipper *fakeip.Skipper, fakePool *fakeip.Pool, fakePool6 *fakei
 			q := r.Question[0]
 
 			host := strings.TrimRight(q.Name, ".")
-			if skipper.ShouldSkipped(host) {
+
+			skip, nullIp := skipper.ShouldSkipped(host)
+			if skip {
 				return next(ctx, r)
 			}
 
 			var rr D.RR
 			switch q.Qtype {
 			case D.TypeA:
-				if fakePool == nil {
-					return handleMsgWithEmptyAnswer(r), nil
-				}
-				ip := fakePool.Lookup(host)
-				rr = &D.A{
-					Hdr: D.RR_Header{Name: q.Name, Rrtype: D.TypeA, Class: D.ClassINET, Ttl: dnsDefaultTTL},
-					A:   ip.AsSlice(),
+				if nullIp {
+					rr = &D.A{
+						Hdr: D.RR_Header{Name: q.Name, Rrtype: D.TypeA, Class: D.ClassINET, Ttl: dnsDefaultTTL},
+						A:   net.IPv4zero,
+					}
+				} else {
+					if fakePool == nil {
+						return handleMsgWithEmptyAnswer(r), nil
+					}
+					ip := fakePool.Lookup(host)
+					rr = &D.A{
+						Hdr: D.RR_Header{Name: q.Name, Rrtype: D.TypeA, Class: D.ClassINET, Ttl: dnsDefaultTTL},
+						A:   ip.AsSlice(),
+					}
 				}
 			case D.TypeAAAA:
-				if fakePool6 == nil {
-					return handleMsgWithEmptyAnswer(r), nil
-				}
-				ip := fakePool6.Lookup(host)
-				rr = &D.AAAA{
-					Hdr:  D.RR_Header{Name: q.Name, Rrtype: D.TypeAAAA, Class: D.ClassINET, Ttl: dnsDefaultTTL},
-					AAAA: ip.AsSlice(),
+				if nullIp {
+					rr = &D.AAAA{
+						Hdr:  D.RR_Header{Name: q.Name, Rrtype: D.TypeAAAA, Class: D.ClassINET, Ttl: dnsDefaultTTL},
+						AAAA: net.IPv6zero,
+					}
+				} else {
+					if fakePool6 == nil {
+						return handleMsgWithEmptyAnswer(r), nil
+					}
+					ip := fakePool6.Lookup(host)
+					rr = &D.AAAA{
+						Hdr:  D.RR_Header{Name: q.Name, Rrtype: D.TypeAAAA, Class: D.ClassINET, Ttl: dnsDefaultTTL},
+						AAAA: ip.AsSlice(),
+					}
 				}
 			case D.TypeSVCB, D.TypeHTTPS:
 				return handleMsgWithEmptyAnswer(r), nil
 			default:
 				return next(ctx, r)
 			}
-
 			msg := r.Copy()
 			msg.Answer = []D.RR{rr}
 

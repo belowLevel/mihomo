@@ -240,7 +240,6 @@ func RegisterGeoUpdater() {
 	go func() {
 		ticker := time.NewTicker(time.Duration(updateInterval) * time.Hour)
 		defer ticker.Stop()
-
 		lastUpdate, err := getUpdateTime()
 		if err != nil {
 			log.Errorln("[GEO] Get GEO database update time error: %s", err.Error())
