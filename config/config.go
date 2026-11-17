@@ -1625,8 +1625,8 @@ func parseFakeIPRules(rawRules []string, ruleProviders map[string]P.RuleProvider
 		tp, payload, action, params := RC.ParseRulePayload(line, true)
 
 		action = strings.ToLower(action)
-		if action != fakeip.UseFakeIP && action != fakeip.UseRealIP {
-			return nil, fmt.Errorf("dns.fake-ip-filter[%d] [%s] error: invalid action '%s', must be 'fake-ip' or 'real-ip'", idx, line, action)
+		if action != fakeip.UseFakeIP && action != fakeip.UseRealIP && action != fakeip.UseNullIp {
+			return nil, fmt.Errorf("dns.fake-ip-filter[%d] [%s] error: invalid action '%s', must be 'fake-ip', 'real-ip' or 'null-ip'", idx, line, action)
 		}
 
 		if tp == "RULE-SET" {
@@ -1660,7 +1660,7 @@ func parseFakeIPRules(rawRules []string, ruleProviders map[string]P.RuleProvider
 
 func isDomainRule(rt C.RuleType) bool {
 	switch rt {
-	case C.Domain, C.DomainSuffix, C.DomainKeyword, C.DomainRegex, C.DomainWildcard, C.GEOSITE, C.RuleSet:
+	case C.Domain, C.DomainSuffix, C.DomainKeyword, C.DomainRegex, C.DomainWildcard, C.GEOSITE, C.RuleSet, C.DomainTxt, C.ADGUARD:
 		return true
 	default:
 		return false
